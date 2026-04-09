@@ -1976,5 +1976,35 @@
                 "ID": 212
             }
         ]
+    },
+    "turret": {
+        "normal": [
+            {
+                "Name": "HVM Heavy Machine Gun Sentry",
+                "ID": 54
+            },
+            {
+                "Name": "Ronson Cryogenic Turret",
+                "ID": 56
+            },
+            {
+                "Name": "Ronson MK V Flame Turret",
+                "ID": 63
+            }
+        ],
+        "red": [
+            {
+                "Name": "HVM Heavy Machine Gun Sentry",
+                "ID": 133
+            },
+            {
+                "Name": "Ronson Cryogenic Turret",
+                "ID": 134
+            },
+            {
+                "Name": "Ronson MK V Flame Turret",
+                "ID": 137
+            }
+        ]
     }
 }
