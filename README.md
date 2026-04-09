@@ -3,7 +3,7 @@ Save file editor for SAS: Zombie Assault 4 by Ninja Kiwi, written in Python.
 
 ---
 
-## 🚀 Quick Start (Recommended for Most Users)
+## Quick Start (Recommended for Most Users)
 
 If you just want to use the editor without installing Python or dealing with code:
 
@@ -14,7 +14,7 @@ If you just want to use the editor without installing Python or dealing with cod
 
 ---
 
-## 🛠️ Running from Source (For Developers)
+## Running from Source (For Developers)
 
 If you'd rather run the script directly using Python:
 
@@ -39,7 +39,7 @@ If you'd rather run the script directly using Python:
 
 ---
 
-## ⚠️ Important Notes
+## Important Notes
 - **Backup your save**: Always keep a copy of your `Profile.save` before making major changes.
 - **Steam Cloud**: If Steam Cloud is active, it might overwrite your changes. It's recommended to edit while the game is closed.
 
