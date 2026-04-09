@@ -15,5 +15,5 @@ __pycache__/
 
 # PyInstaller
 build/
+dist/
 *.spec
-# dist/ is NOT ignored to allow uploading the exe release
