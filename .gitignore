@@ -1,0 +1,14 @@
+
+structs/
+sas4_datastruct/
+newEnglish*.csv
+
+
+Decoded/
+Profile.save
+config.json
+
+
+__pycache__/
+*.pyc
+.venv/
