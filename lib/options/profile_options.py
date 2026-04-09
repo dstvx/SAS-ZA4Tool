@@ -65,6 +65,28 @@ def get_item_name(item_id: int, preferred_category: str | None = None) -> str:
                     if item["ID"] == item_id: return item["Name"]
                 
     return f"Unknown Item ({item_id})"
+    
+def _get_iap_identifier(item_id: int) -> str | None:
+    db = get_items_database()
+    for cat_list in db.get("premium", {}).values():
+        for wpn in cat_list:
+            if wpn["ID"] == item_id:
+                return f"sas4_{wpn['Name'].lower().replace('.', '').replace(' ', '')}"
+    return None
+
+def _set_iap_value(identifier: str, value: bool):
+    session = save_manager.get_session()
+    iap_path = ["PurchasedIAP", "PurchasedIAPArray"]
+    iaps = session.get(iap_path, [])
+    found = False
+    for iap in iaps:
+        if iap.get("Identifier") == identifier:
+            iap["Value"] = value
+            found = True
+            break
+    if not found and value:
+        iaps.append({"Identifier": identifier, "Value": True})
+    session.set(iap_path, iaps)
 
 def remove_item_at_index(list_index: int, category: str) -> dict[str, Any]:
     try:
@@ -82,6 +104,16 @@ def remove_item_at_index(list_index: int, category: str) -> dict[str, Any]:
                 item["InventoryIndex"] = i
                 
             session.set(path, items)
+            
+            # Handle IAP for premium guns
+            if category == "weapon":
+                ident = _get_iap_identifier(removed.get("ID", 0))
+                if ident:
+                    # Check if any of THIS gun still exists
+                    has_more = any(w.get("ID") == removed.get("ID") for w in items)
+                    if not has_more:
+                        _set_iap_value(ident, False)
+
             session.commit()
             return {"message": f"Successfully removed {get_item_name(removed.get('ID'))}!", "is_error": False}
         return {"message": "Invalid item index.", "is_error": True}
@@ -228,6 +260,21 @@ def max_out_masteries() -> dict[str, Any]:
         return {"message": "Masteries maxed out!", "is_error": False}
     except SaveError as e:
         return {"message": f"Failed to update Masteries: {e}", "is_error": True}
+        
+def clear_masteries() -> dict[str, Any]:
+    try:
+        profile_key = _get_selected_profile_key()
+        session = save_manager.get_session()
+        masteries = session.get(["MasteryProgress", f"Mastery{profile_key}"], [])
+        for m in masteries:
+            m["MasteryXp"] = 0
+            m["MasteryLvl"] = 0
+        
+        session.set(["MasteryProgress", f"Mastery{profile_key}"], masteries)
+        session.commit()
+        return {"message": "Masteries cleared!", "is_error": False}
+    except SaveError as e:
+        return {"message": f"Failed to clear Masteries: {e}", "is_error": True}
 
 def god_roll_equipped() -> dict[str, Any]:
     try:
@@ -353,6 +400,12 @@ def inject_item(category: str, item_id: int, version: str, slot: int) -> dict[st
         
         strongboxes.extend([item_prefix, item_obj, 8, 2])
         session.set(claim_path, strongboxes)
+        
+        # Handle IAP for premium guns
+        if category == "weapon":
+            ident = _get_iap_identifier(item_id)
+            if ident: _set_iap_value(ident, True)
+
         session.commit()
         return {"message": "Item injected into queue!", "is_error": False}
     except SaveError as e:
@@ -478,10 +531,11 @@ def generate_profile_menu() -> dict[str, Any]:
         _build_mp_stats_menu(),
         create_option("Mass God-Roll (Equipped)", "1.2.9", OptionType.ACTION, action=god_roll_equipped),
         create_option("Max Out Masteries", "1.2.9.1", OptionType.ACTION, action=max_out_masteries),
-        create_option("Clear 'New' Notifs", "1.2.9.2", OptionType.ACTION, action=clean_new_badges),
-        create_option("Purge Premium Weapons", "1.2.9.3", OptionType.ACTION, action=purge_premium_guns),
-        create_option("Wipe Strongbox Queue", "1.2.9.4", OptionType.ACTION, action=clear_strongbox_queue),
-        create_option("Wipe Black Strongbox Queue", "1.2.9.5", OptionType.ACTION, action=clear_black_box_queue),
+        create_option("Clear Masteries", "1.2.9.2", OptionType.ACTION, action=clear_masteries),
+        create_option("Clear 'New' Notifs", "1.2.9.3", OptionType.ACTION, action=clean_new_badges),
+        create_option("Purge Premium Weapons", "1.2.9.4", OptionType.ACTION, action=purge_premium_guns),
+        create_option("Wipe Strongbox Queue", "1.2.9.5", OptionType.ACTION, action=clear_strongbox_queue),
+        create_option("Wipe Black Strongbox Queue", "1.2.9.6", OptionType.ACTION, action=clear_black_box_queue),
         _build_injection_menus(),
         _build_removal_menu()
     ])

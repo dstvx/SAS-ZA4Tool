@@ -206,8 +206,8 @@ class UserInterface:
             if min_v is not None and max_v is not None: prompt += f'({min_v}-{max_v})'
             try:
                 val = int(input(f"{prompt}: "))
-            except ValueError:
-                self.message = f"{F.RED}Invalid.{F.RESET}"
+            except (ValueError, KeyboardInterrupt):
+                self.message = f"{F.RED}Cancelled or Invalid.{F.RESET}"
                 return
             if (min_v is not None and val < min_v) or (max_v is not None and val > max_v):
                 self.message = f"{F.RED}Out of range.{F.RESET}"
@@ -229,7 +229,11 @@ class UserInterface:
         if node_type == OptionType.INPUT['text']:
             self.message = f"{F.LIGHTBLUE_EX}Enter for: {selected_node['label']}{F.RESET}"
             self.display_menu()
-            val = input('Value: ')
+            try:
+                val = input('Value: ')
+            except KeyboardInterrupt:
+                self.message = f"{F.RED}Cancelled.{F.RESET}"
+                return
             if not callable(selected_node.get('value')): selected_node['value'] = val
             selected_node['_last_input'] = val
             if 'config_key' in selected_node:
@@ -246,7 +250,13 @@ class UserInterface:
         if node_type == OptionType.INPUT['confirm']:
             self.message = f"{F.YELLOW}Confirm: {selected_node['label']}{F.RESET}"
             self.display_menu()
-            if input("Proceed? (Y/N): ").strip().lower() not in ('y', 'yes'):
+            try:
+                confirm = input("Proceed? (Y/N): ").strip().lower()
+            except KeyboardInterrupt:
+                self.message = f"{F.RED}Cancelled{F.RESET}"
+                return
+                
+            if confirm not in ('y', 'yes'):
                 self.message = f"{F.RED}Cancelled{F.RESET}"
                 return
             self.message = f"{F.GREEN}Confirmed.{F.RESET}"
@@ -277,14 +287,18 @@ class UserInterface:
             if ch2 == b'P': return 'down'
         elif ch == b'\r': return 'enter'
         elif ch in [b'b', b'\x1b']: return 'b'
-        elif ch == b'q': return 'q'
+        elif ch in [b'q', b'\x03']: return 'q'
 
     def run(self):
         print('\033[?25l', end='')
         try:
             while self._running:
                 self.display_menu()
-                key = self._get_key()
+                try:
+                    key = self._get_key()
+                except KeyboardInterrupt:
+                    break
+                    
                 if key == 'up': self.handle_up()
                 elif key == 'down': self.handle_down()
                 elif key == 'enter': self.handle_select()
