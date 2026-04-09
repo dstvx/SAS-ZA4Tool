@@ -2,7 +2,7 @@
 structs/
 sas4_datastruct/
 newEnglish*.csv
-
+tmp/
 
 Decoded/
 Profile.save
@@ -12,3 +12,8 @@ config.json
 __pycache__/
 *.pyc
 .venv/
+
+# PyInstaller
+build/
+*.spec
+# dist/ is NOT ignored to allow uploading the exe release
