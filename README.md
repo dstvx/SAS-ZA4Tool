@@ -11,7 +11,7 @@ If you just want to use the editor without installing Python or dealing with cod
 2.  Download the latest `SASZA4Tool.exe`.
 3.  Run the executable. 
     *   *Note: Your browser or Windows might flag it as "unrecognized" since it's an unsigned tool. You may need to click "Run anyway".*
-
+Discord server: https://discord.gg/WMNxT2v7vw
 ---
 
 ## Running from Source (For Developers)
