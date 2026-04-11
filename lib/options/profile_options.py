@@ -68,10 +68,13 @@ def get_item_name(item_id: int, preferred_category: str | None = None) -> str:
     
 def _get_iap_identifier(item_id: int) -> str | None:
     db = get_items_database()
-    for cat_list in db.get("premium", {}).values():
-        for wpn in cat_list:
-            if wpn["ID"] == item_id:
-                return f"sas4_{wpn['Name'].lower().replace('.', '').replace(' ', '')}"
+    # Premium items are nested under weapons -> category -> premium
+    for category in db.get("weapons", {}).values():
+        for item in category.get("premium", []):
+            if item["ID"] == item_id:
+                # Clean name: lowercase, no dots, no spaces, no dashes
+                clean_name = item["Name"].lower().replace(".", "").replace(" ", "").replace("-", "")
+                return f"sas4_{clean_name}"
     return None
 
 def _set_iap_value(identifier: str, value: bool):
@@ -441,6 +444,7 @@ def _build_injection_menus() -> dict[str, Any]:
     for w_idx, (w_type, versions) in enumerate(db.get("weapons", {}).items(), 1):
         type_menu = create_option(w_type.replace("_", " ").title(), f"1.2.6.1.{w_idx}", OptionType.SUBMENU, children=[])
         for v_idx, (v_str, wpn_list) in enumerate(versions.items(), 1):
+            if v_str == "premium": continue  # Skip premium here, it has its own menu
             ver_menu = create_option(v_str.title(), f"1.2.6.1.{w_idx}.{v_idx}", OptionType.SUBMENU, children=[])
             for i, wpn in enumerate(wpn_list, 1):
                 node = create_option(wpn["Name"], f"1.2.6.1.{w_idx}.{v_idx}.{i}", OptionType.ACTION)
@@ -450,13 +454,19 @@ def _build_injection_menus() -> dict[str, Any]:
         std_wpns["children"].append(type_menu)
 
     premium = create_option("Premium Weapons", "1.2.6.2", OptionType.SUBMENU, children=[])
-    for p_idx, (p_type, wpn_list) in enumerate(db.get("premium", {}).items(), 1):
-        type_menu = create_option(p_type.replace("_", " ").title(), f"1.2.6.2.{p_idx}", OptionType.SUBMENU, children=[])
+    # Gather premium variants from the weapons categories
+    p_idx = 1
+    for w_type, versions in db.get("weapons", {}).items():
+        wpn_list = versions.get("premium", [])
+        if not wpn_list: continue
+        
+        type_menu = create_option(w_type.replace("_", " ").title(), f"1.2.6.2.{p_idx}", OptionType.SUBMENU, children=[])
         for i, wpn in enumerate(wpn_list, 1):
             node = create_option(wpn["Name"], f"1.2.6.2.{p_idx}.{i}", OptionType.ACTION)
             node["action"] = lambda i_id=wpn["ID"]: inject_item("weapon", i_id, "normal", -1)
             type_menu["children"].append(node)
         premium["children"].append(type_menu)
+        p_idx += 1
 
     equipment = create_option("Equipment", "1.2.6.3", OptionType.SUBMENU, children=[])
     slots = {"helmet": 1, "vest": 2, "gloves": 3, "boots": 4, "pants": 5}
