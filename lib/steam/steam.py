@@ -25,7 +25,7 @@ def convert_steamid64_to_userid(steamid64: int) -> int:
 
 def get_save_path(steam_path: Path, user_id: int) -> Path:
     """Locates Profile.save by mapping SteamID64 to local userdata."""
-    base_path = steam_path / "userdata" / str(user_id) / "678800" / "local" / "data" / "docs"
+    base_path = steam_path / "userdata" / str(user_id) / "678800" / "local" / "Data" / "Docs"
 
     # Check for direct save (Legacy/Sync)
     direct_profile_path = base_path / "Profile.save"
