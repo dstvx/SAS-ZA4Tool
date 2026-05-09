@@ -96,7 +96,7 @@ class UserInterface:
        / __/ _ | / __(_)_  / / _ |/ / /_  __/__  ___  / /
       _\ \/ __ |_\ \_   / /_/ __ /_  _// / / _ \/ _ \/ / 
      /___/_/ |_/___(_) /___/_/ |_|/_/ /_/  \___/\___/_/  
-                    {}by{}: {}dstvx{} ver{}: {}1.0.0{}
+                    {}by{}: {}dstvx{} ver{}: {}1.0.1{}
                  {}Selected Profile: {}{}{}'''.format(
                      F.LIGHTRED_EX, F.CYAN, F.LIGHTWHITE_EX, F.LIGHTGREEN_EX, F.CYAN, F.LIGHTWHITE_EX, F.LIGHTGREEN_EX, F.RESET,
                      F.CYAN, F.LIGHTGREEN_EX, profile, F.RESET
