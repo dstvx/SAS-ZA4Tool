@@ -95,6 +95,22 @@
             ],
             "black": [
                 {
+                    "Name": "CM 202",
+                    "ID": 10075
+                },
+                {
+                    "Name": "CM 205",
+                    "ID": 10070
+                },
+                {
+                    "Name": "CM 225",
+                    "ID": 10165
+                },
+                {
+                    "Name": "HVM 001",
+                    "ID": 10078
+                },
+                {
                     "Name": "Mustang",
                     "ID": 10068
                 },
@@ -107,8 +123,16 @@
                     "ID": 10161
                 },
                 {
+                    "Name": "RIA 313",
+                    "ID": 10110
+                },
+                {
                     "Name": "Ronson 45",
                     "ID": 10077
+                },
+                {
+                    "Name": "Sabre",
+                    "ID": 10067
                 },
                 {
                     "Name": "Trailblazer",
@@ -1083,16 +1107,20 @@
                     "ID": 206
                 },
                 {
+                    "Name": "Graphene Combat Hood",
+                    "ID": 99
+                },
+                {
+                    "Name": "Hardplate Helm",
+                    "ID": 173
+                },
+                {
                     "Name": "HVM Carbon Fibre Helmet",
                     "ID": 184
                 },
                 {
                     "Name": "HVM Kevlar Helmet",
                     "ID": 125
-                },
-                {
-                    "Name": "Hardplate Helm",
-                    "ID": 173
                 },
                 {
                     "Name": "Medusa Helmet",
@@ -1103,8 +1131,16 @@
                     "ID": 106
                 },
                 {
+                    "Name": "Shotlite Hummingbird H1",
+                    "ID": 165
+                },
+                {
                     "Name": "Special Forces Helmet",
                     "ID": 107
+                },
+                {
+                    "Name": "Titan IRN HUD",
+                    "ID": 119
                 },
                 {
                     "Name": "Trooper Helmet",
@@ -1117,16 +1153,20 @@
                     "ID": 207
                 },
                 {
+                    "Name": "Graphene Combat Hood",
+                    "ID": 139
+                },
+                {
+                    "Name": "Hardplate Helm",
+                    "ID": 175
+                },
+                {
                     "Name": "HVM Carbon Fibre Helmet",
                     "ID": 185
                 },
                 {
                     "Name": "HVM Kevlar Helmet",
                     "ID": 155
-                },
-                {
-                    "Name": "Hardplate Helm",
-                    "ID": 175
                 },
                 {
                     "Name": "Medusa Helmet",
@@ -1137,8 +1177,16 @@
                     "ID": 136
                 },
                 {
+                    "Name": "Shotlite Hummingbird H1",
+                    "ID": 158
+                },
+                {
                     "Name": "Special Forces Helmet",
                     "ID": 143
+                },
+                {
+                    "Name": "Titan IRN HUD",
+                    "ID": 130
                 },
                 {
                     "Name": "Trooper Helmet",
@@ -1151,16 +1199,20 @@
                     "ID": 10207
                 },
                 {
+                    "Name": "Graphene Combat Hood",
+                    "ID": 10139
+                },
+                {
+                    "Name": "Hardplate Helm",
+                    "ID": 10175
+                },
+                {
                     "Name": "HVM Carbon Fibre Helmet",
                     "ID": 10185
                 },
                 {
                     "Name": "HVM Kevlar Helmet",
                     "ID": 10155
-                },
-                {
-                    "Name": "Hardplate Helm",
-                    "ID": 10175
                 },
                 {
                     "Name": "Medusa Helmet",
@@ -1171,8 +1223,16 @@
                     "ID": 10136
                 },
                 {
+                    "Name": "Shotlite Hummingbird H1",
+                    "ID": 10158
+                },
+                {
                     "Name": "Special Forces Helmet",
                     "ID": 10143
+                },
+                {
+                    "Name": "Titan IRN HUD",
+                    "ID": 10130
                 },
                 {
                     "Name": "Trooper Helmet",
@@ -1213,12 +1273,8 @@
                     "ID": 208
                 },
                 {
-                    "Name": "HVM Carbon Fibre Vest",
-                    "ID": 186
-                },
-                {
-                    "Name": "HVM Kevlar Vest",
-                    "ID": 101
+                    "Name": "Graphene Body Suit Top",
+                    "ID": 115
                 },
                 {
                     "Name": "Hardplate Chest",
@@ -1229,6 +1285,14 @@
                     "ID": 112
                 },
                 {
+                    "Name": "HVM Carbon Fibre Vest",
+                    "ID": 186
+                },
+                {
+                    "Name": "HVM Kevlar Vest",
+                    "ID": 101
+                },
+                {
                     "Name": "Medusa Vest",
                     "ID": 196
                 },
@@ -1237,8 +1301,20 @@
                     "ID": 118
                 },
                 {
+                    "Name": "Rubicon Power Assist",
+                    "ID": 105
+                },
+                {
+                    "Name": "Shotlite Hummingbird V1",
+                    "ID": 168
+                },
+                {
                     "Name": "Special Forces Vest",
                     "ID": 100
+                },
+                {
+                    "Name": "Titan Teslashock",
+                    "ID": 123
                 },
                 {
                     "Name": "Trooper Vest",
@@ -1251,12 +1327,8 @@
                     "ID": 209
                 },
                 {
-                    "Name": "HVM Carbon Fibre Vest",
-                    "ID": 187
-                },
-                {
-                    "Name": "HVM Kevlar Vest",
-                    "ID": 142
+                    "Name": "Graphene Body Suit Top",
+                    "ID": 161
                 },
                 {
                     "Name": "Hardplate Chest",
@@ -1267,6 +1339,14 @@
                     "ID": 164
                 },
                 {
+                    "Name": "HVM Carbon Fibre Vest",
+                    "ID": 187
+                },
+                {
+                    "Name": "HVM Kevlar Vest",
+                    "ID": 142
+                },
+                {
                     "Name": "Medusa Vest",
                     "ID": 197
                 },
@@ -1275,8 +1355,20 @@
                     "ID": 141
                 },
                 {
+                    "Name": "Rubicon Power Assist",
+                    "ID": 137
+                },
+                {
+                    "Name": "Shotlite Hummingbird V1",
+                    "ID": 156
+                },
+                {
                     "Name": "Special Forces Vest",
                     "ID": 154
+                },
+                {
+                    "Name": "Titan Teslashock",
+                    "ID": 157
                 },
                 {
                     "Name": "Trooper Vest",
@@ -1289,12 +1381,8 @@
                     "ID": 10209
                 },
                 {
-                    "Name": "HVM Carbon Fibre Vest",
-                    "ID": 10187
-                },
-                {
-                    "Name": "HVM Kevlar Vest",
-                    "ID": 10142
+                    "Name": "Graphene Body Suit Top",
+                    "ID": 10161
                 },
                 {
                     "Name": "Hardplate Chest",
@@ -1305,6 +1393,14 @@
                     "ID": 10164
                 },
                 {
+                    "Name": "HVM Carbon Fibre Vest",
+                    "ID": 10187
+                },
+                {
+                    "Name": "HVM Kevlar Vest",
+                    "ID": 10142
+                },
+                {
                     "Name": "Medusa Vest",
                     "ID": 10197
                 },
@@ -1313,8 +1409,20 @@
                     "ID": 10141
                 },
                 {
+                    "Name": "Rubicon Power Assist",
+                    "ID": 10137
+                },
+                {
+                    "Name": "Shotlite Hummingbird V1",
+                    "ID": 10156
+                },
+                {
                     "Name": "Special Forces Vest",
                     "ID": 10154
+                },
+                {
+                    "Name": "Titan Teslashock",
+                    "ID": 10157
                 },
                 {
                     "Name": "Trooper Vest",
@@ -1359,16 +1467,16 @@
                     "ID": 113
                 },
                 {
+                    "Name": "Hardplate Gauntlets",
+                    "ID": 180
+                },
+                {
                     "Name": "HVM Carbon Fibre Gloves",
                     "ID": 190
                 },
                 {
                     "Name": "HVM Kevlar Gloves",
                     "ID": 98
-                },
-                {
-                    "Name": "Hardplate Gauntlets",
-                    "ID": 180
                 },
                 {
                     "Name": "Medusa Gloves",
@@ -1379,8 +1487,16 @@
                     "ID": 117
                 },
                 {
+                    "Name": "Shotlite Hummingbird G1",
+                    "ID": 151
+                },
+                {
                     "Name": "Special Forces Gloves",
                     "ID": 128
+                },
+                {
+                    "Name": "Titan IDS 01",
+                    "ID": 111
                 },
                 {
                     "Name": "Trooper Gloves",
@@ -1397,16 +1513,16 @@
                     "ID": 134
                 },
                 {
+                    "Name": "Hardplate Gauntlets",
+                    "ID": 181
+                },
+                {
                     "Name": "HVM Carbon Fibre Gloves",
                     "ID": 191
                 },
                 {
                     "Name": "HVM Kevlar Gloves",
                     "ID": 146
-                },
-                {
-                    "Name": "Hardplate Gauntlets",
-                    "ID": 181
                 },
                 {
                     "Name": "Medusa Gloves",
@@ -1417,8 +1533,16 @@
                     "ID": 159
                 },
                 {
+                    "Name": "Shotlite Hummingbird G1",
+                    "ID": 145
+                },
+                {
                     "Name": "Special Forces Gloves",
                     "ID": 132
+                },
+                {
+                    "Name": "Titan IDS 01",
+                    "ID": 135
                 },
                 {
                     "Name": "Trooper Gloves",
@@ -1435,16 +1559,16 @@
                     "ID": 10134
                 },
                 {
+                    "Name": "Hardplate Gauntlets",
+                    "ID": 10181
+                },
+                {
                     "Name": "HVM Carbon Fibre Gloves",
                     "ID": 10191
                 },
                 {
                     "Name": "HVM Kevlar Gloves",
                     "ID": 10146
-                },
-                {
-                    "Name": "Hardplate Gauntlets",
-                    "ID": 10181
                 },
                 {
                     "Name": "Medusa Gloves",
@@ -1455,8 +1579,16 @@
                     "ID": 10159
                 },
                 {
+                    "Name": "Shotlite Hummingbird G1",
+                    "ID": 10145
+                },
+                {
                     "Name": "Special Forces Gloves",
                     "ID": 10132
+                },
+                {
+                    "Name": "Titan IDS 01",
+                    "ID": 10135
                 },
                 {
                     "Name": "Trooper Gloves",
@@ -1497,6 +1629,14 @@
                     "ID": 210
                 },
                 {
+                    "Name": "Graphene Body Suit Bottom",
+                    "ID": 127
+                },
+                {
+                    "Name": "Hardplate Leg Protection",
+                    "ID": 178
+                },
+                {
                     "Name": "HVM Carbon Fibre Pants",
                     "ID": 188
                 },
@@ -1513,8 +1653,16 @@
                     "ID": 120
                 },
                 {
+                    "Name": "Shotlite Hummingbird P1",
+                    "ID": 169
+                },
+                {
                     "Name": "Special Forces Pants",
                     "ID": 126
+                },
+                {
+                    "Name": "Titan MEM Trooper",
+                    "ID": 121
                 },
                 {
                     "Name": "Trooper Pants",
@@ -1525,6 +1673,14 @@
                 {
                     "Name": "Dragonfly Pants",
                     "ID": 211
+                },
+                {
+                    "Name": "Graphene Body Suit Bottom",
+                    "ID": 163
+                },
+                {
+                    "Name": "Hardplate Leg Protection",
+                    "ID": 179
                 },
                 {
                     "Name": "HVM Carbon Fibre Pants",
@@ -1543,8 +1699,16 @@
                     "ID": 138
                 },
                 {
+                    "Name": "Shotlite Hummingbird P1",
+                    "ID": 153
+                },
+                {
                     "Name": "Special Forces Pants",
                     "ID": 152
+                },
+                {
+                    "Name": "Titan MEM Trooper",
+                    "ID": 171
                 },
                 {
                     "Name": "Trooper Pants",
@@ -1555,6 +1719,14 @@
                 {
                     "Name": "Dragonfly Pants",
                     "ID": 10211
+                },
+                {
+                    "Name": "Graphene Body Suit Bottom",
+                    "ID": 10163
+                },
+                {
+                    "Name": "Hardplate Leg Protection",
+                    "ID": 10179
                 },
                 {
                     "Name": "HVM Carbon Fibre Pants",
@@ -1573,8 +1745,16 @@
                     "ID": 10138
                 },
                 {
+                    "Name": "Shotlite Hummingbird P1",
+                    "ID": 10153
+                },
+                {
                     "Name": "Special Forces Pants",
                     "ID": 10152
+                },
+                {
+                    "Name": "Titan MEM Trooper",
+                    "ID": 10171
                 },
                 {
                     "Name": "Trooper Pants",
@@ -1619,16 +1799,16 @@
                     "ID": 103
                 },
                 {
+                    "Name": "Hardplate Boots",
+                    "ID": 182
+                },
+                {
                     "Name": "HVM Carbon Fibre Boots",
                     "ID": 192
                 },
                 {
                     "Name": "HVM Combat Boots",
                     "ID": 114
-                },
-                {
-                    "Name": "Hardplate Boots",
-                    "ID": 182
                 },
                 {
                     "Name": "Medusa Boots",
@@ -1647,6 +1827,10 @@
                     "ID": 116
                 },
                 {
+                    "Name": "Titan MEM Sprint",
+                    "ID": 124
+                },
+                {
                     "Name": "Trooper Boots",
                     "ID": 109
                 }
@@ -1661,16 +1845,16 @@
                     "ID": 170
                 },
                 {
+                    "Name": "Hardplate Boots",
+                    "ID": 183
+                },
+                {
                     "Name": "HVM Carbon Fibre Boots",
                     "ID": 193
                 },
                 {
                     "Name": "HVM Combat Boots",
                     "ID": 131
-                },
-                {
-                    "Name": "Hardplate Boots",
-                    "ID": 183
                 },
                 {
                     "Name": "Medusa Boots",
@@ -1689,6 +1873,10 @@
                     "ID": 149
                 },
                 {
+                    "Name": "Titan MEM Sprint",
+                    "ID": 167
+                },
+                {
                     "Name": "Trooper Boots",
                     "ID": 160
                 }
@@ -1703,16 +1891,16 @@
                     "ID": 10170
                 },
                 {
+                    "Name": "Hardplate Boots",
+                    "ID": 10183
+                },
+                {
                     "Name": "HVM Carbon Fibre Boots",
                     "ID": 10193
                 },
                 {
                     "Name": "HVM Combat Boots",
                     "ID": 10131
-                },
-                {
-                    "Name": "Hardplate Boots",
-                    "ID": 10183
                 },
                 {
                     "Name": "Medusa Boots",
@@ -1729,6 +1917,10 @@
                 {
                     "Name": "Special Forces Boots",
                     "ID": 10149
+                },
+                {
+                    "Name": "Titan MEM Sprint",
+                    "ID": 10167
                 },
                 {
                     "Name": "Trooper Boots",
@@ -1782,7 +1974,7 @@
                 "ID": 60
             },
             {
-                "Name": "Teknoboom Flugk\u00f6rper",
+                "Name": "Teknoboom Flugkörper",
                 "ID": 62
             },
             {
@@ -1804,7 +1996,7 @@
                 "ID": 135
             },
             {
-                "Name": "Teknoboom Flugk\u00f6rper",
+                "Name": "Teknoboom Flugkörper",
                 "ID": 136
             },
             {
