@@ -1,91 +1,84 @@
+import sys
 from pathlib import Path
+from typing import Optional, Final
+
+if sys.platform != "win32":
+    raise RuntimeError("Resolver is only supported on Windows platform.")
+
 import winreg
-import vdf
 
-class SteamPathNotFound(Exception):
-    def __init__(self, message: str = "Steam installation path not found."):
-        super().__init__(message)
+STEAM_ID64_BASE: Final[int] = 76561197960265728
 
-class SteamUserParsingError(Exception):
-    def __init__(self, message: str = "Steam user data cannot be parsed."):
-        super().__init__(message)
 
-def get_steam_path() -> Path:
-    """Gets the Steam installation path via registry."""
+def to_account_id(steam_id: int | str) -> int:
+    """Converts a 64-bit SteamID to a 32-bit account ID.
+
+    Args:
+        steam_id (int | str): The 64-bit or 32-bit Steam ID.
+
+    Returns:
+        int: The 32-bit Steam account ID.
+
+    Raises:
+        ValueError: If steam_id format is invalid.
+    """
     try:
-        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam")
-        steam_path, _ = winreg.QueryValueEx(key, "SteamPath")
-        winreg.CloseKey(key)
-        return Path(steam_path)
-    except FileNotFoundError:
-        raise SteamPathNotFound()
+        val = int(steam_id)
+    except ValueError as e:
+        raise ValueError(f"Invalid Steam ID format: {steam_id}") from e
 
-def convert_steamid64_to_userid(steamid64: int) -> int:
-    return steamid64 - 76561197960265728
+    if val >= STEAM_ID64_BASE:
+        return val - STEAM_ID64_BASE
+    return val
 
-def get_save_path(steam_path: Path, user_id: int) -> Path:
-    """Locates Profile.save by mapping SteamID64 to local userdata."""
-    base_path = steam_path / "userdata" / str(user_id) / "678800" / "local" / "Data" / "Docs"
 
-    # Check for direct save (Legacy/Sync)
-    direct_profile_path = base_path / "Profile.save"
-    if direct_profile_path.is_file():
-        return direct_profile_path
+def _query_registry_path(hkey: int, subkey: str, value_name: str) -> Optional[Path]:
+    """Queries registry key for Steam installation path value.
 
-    # Check hash-named subdirectories (Cloud/Modern)
-    if base_path.exists():
-        for sub_dir in base_path.iterdir():
-            if sub_dir.is_dir() and len(sub_dir.name) == 24:
-                hashed_profile_path = sub_dir / "Profile.save"
-                if hashed_profile_path.is_file():
-                    return hashed_profile_path
+    Args:
+        hkey (int): Registry hive key (HKEY_CURRENT_USER/HKEY_LOCAL_MACHINE).
+        subkey (str): Registry path name.
+        value_name (str): Registry value name to extract.
 
-    raise FileNotFoundError(f"SAS4 Profile.save not found for user {user_id} in {base_path}")
+    Returns:
+        Optional[Path]: Resolved directory Path or None.
+    """
+    try:
+        with winreg.OpenKey(hkey, subkey, 0, winreg.KEY_READ) as key:
+            path_str, _ = winreg.QueryValueEx(key, value_name)
+            return Path(str(path_str)).resolve() if path_str else None
+    except OSError:
+        return None
 
-def get_local_steam_users() -> list[tuple[str, int]]:
-    """Lists local Steam users from loginusers.vdf."""
-    steam_path = get_steam_path()
-    loginusers_path = steam_path / "config" / "loginusers.vdf"
 
-    if not loginusers_path.is_file():
-        raise FileNotFoundError(f"loginusers.vdf not found at {loginusers_path}")
-
-    with open(loginusers_path, 'r', encoding='utf-8') as f:
-        data = vdf.load(f)
-
-    local_users: list[tuple[str, int]] = []
-    users = data.get("users", {})
-
-    for steamid_str, user_data in users.items():
-        try:
-            local_users.append((user_data.get("PersonaName", "Unknown"), int(steamid_str)))
-        except ValueError:
-            continue
-
-    return local_users
-
-def get_local_steam_users_with_sas4() -> list[tuple[str, int]]:
-    """Filters local users who have an existing SAS4 save folder."""
-    steam_path = get_steam_path()
-    all_users = get_local_steam_users()
+class Resolver:
+    """Steam path resolver locating installation directory using windows registry."""
     
-    sas4_users = []
-    for username, steam_id64 in all_users:
-        try:
-            user_id = convert_steamid64_to_userid(steam_id64)
-            get_save_path(steam_path, user_id)
-            sas4_users.append((username, steam_id64))
-        except FileNotFoundError:
-            continue
-    
-    return sas4_users
+    REGISTRY_LOOKUPS: Final[tuple[tuple[int, str, str], ...]] = (
+        (winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam", "SteamPath"),
+        (winreg.HKEY_LOCAL_MACHINE, r"Software\Valve\Steam", "InstallPath"),
+        (winreg.HKEY_LOCAL_MACHINE, r"Software\Wow6432Node\Valve\Steam", "InstallPath"),
+    )
 
-__all__ = [
-    "SteamPathNotFound",
-    "SteamUserParsingError",
-    "convert_steamid64_to_userid",
-    "get_steam_path",
-    "get_save_path",
-    "get_local_steam_users",
-    "get_local_steam_users_with_sas4",
-]
+    def __init__(self) -> None:
+        """Initializes Resolver instance."""
+        self._cached_path: Optional[Path] = None
+        self._resolved: bool = False
+
+    def resolve(self) -> Optional[Path]:
+        """Resolves the Steam path from registry lookups and caches it.
+
+        Returns:
+            Optional[Path]: Resolved path directory, or None.
+        """
+        if not self._resolved:
+            for hkey, subkey, value_name in self.REGISTRY_LOOKUPS:
+                path = _query_registry_path(hkey, subkey, value_name)
+                if path and path.is_dir():
+                    self._cached_path = path
+                    break
+            self._resolved = True
+        return self._cached_path
+
+
+default_resolver: Final[Resolver] = Resolver()

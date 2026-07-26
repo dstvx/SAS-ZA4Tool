@@ -1,35 +1,55 @@
-from lib.ui.user_interface import OptionType, UserInterface
-from lib.utils.initial_setup import initial_setup_menu
-from lib.ui.user_interface import create_option, OptionType
-from lib.options.options import generate_options_menu
-from lib.options.utilities import generate_utilities_menu
-from lib.options.global_options import generate_global_menu
-from lib.options.profile_options import generate_profile_menu
+import sys
+from lib.menu import run_app
+from lib.utils.logger import setup_logger, logger
 
-from lib.utils.config import ConfigManager
 
-if __name__ == '__main__':
-    cm = ConfigManager().data
-    
-    if not cm.get('selected_profile'):
-        print("Running initial setup...")
-        setup_ui = UserInterface(initial_setup_menu)
-        setup_ui.run()
-        
-        if not ConfigManager().data.get('selected_profile'):
-           print("Setup aborted or incomplete. The main menu will load, but features may not function without a profile.")
-               
+def main() -> None:
+    setup_logger()
+    logger.info("SAS:ZA4Tool launched.")
 
-    
-    menu = create_option(
-        'Main menu', '1', OptionType.SUBMENU,
-        children=[
-            generate_global_menu(),
-            generate_profile_menu(),
-            generate_utilities_menu(),
-            generate_options_menu()
-        ]
-    )
+    from lib.config import config
+    from lib.exceptions import CancelError
 
-    main_ui = UserInterface(menu)
-    main_ui.run()
+    if not config.setup_done:
+        try:
+            from lib.utils.setup import run_setup
+            run_setup()
+        except (KeyboardInterrupt, CancelError):
+            import subprocess
+            subprocess.run("cls", shell=True)
+            logger.info("SAS:ZA4Tool setup terminated by user.")
+            sys.exit(0)
+
+    if config.check_updates:
+        try:
+            from lib.utils.updates import check_for_updates, VERSION
+            has_update, latest = check_for_updates()
+            if has_update:
+                print(f"\n[INFO] A new version of SAS:ZA4Tool is available! (Current: {VERSION}, Latest: {latest})")
+                try:
+                    input("Press Enter to continue...")
+                except KeyboardInterrupt:
+                    pass
+        except Exception as e:
+            logger.error(f"Update check failed: {e}")
+
+    try:
+        run_app()
+    except (KeyboardInterrupt, CancelError):
+        import subprocess
+        subprocess.run("cls", shell=True)
+        logger.info("SAS:ZA4Tool terminated by user.")
+        sys.exit(0)
+    except Exception as e:
+        logger.critical(f"Unhandled crash: {e}", exc_info=True)
+        print(f"\n[CRITICAL ERROR] The application crashed: {e}")
+        print("If logging is enabled in settings, details have been written to sas_za4tool.log.")
+        try:
+            input("\nPress Enter to exit...")
+        except KeyboardInterrupt:
+            pass
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

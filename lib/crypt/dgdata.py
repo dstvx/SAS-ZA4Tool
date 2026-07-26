@@ -1,15 +1,12 @@
-from typing import Final, Dict
+from typing import Final, Dict, Any
 import os
 import struct
 
-import numpy as np
+HEADER_SIZE: Final[int] = 14
+CHECKSUM_SIZE: Final[int] = HEADER_SIZE - 6
+HEADER_MAGIC: Final[bytes] = b"DGDATA"
 
-HEADER_SIZE: Final = 14
-CHECKSUM_SIZE: Final = HEADER_SIZE - 6
-HEADER_MAGIC: Final = b"DGDATA"
-
-
-T0 = [
+T0: Final[list[int]] = [
     0x00000000, 0x09073096, 0x120E612C, 0x1B0951BA, 0xFF6DC419, 0xF66AF48F, 0xED63A535, 0xE46495A3,
     0xFEDB8832, 0xF7DCB8A4, 0xECD5E91E, 0xE5D2D988, 0x01B64C2B, 0x08B17CBD, 0x13B82D07, 0x1ABF1D91,
     0xFDB71064, 0xF4B020F2, 0xEFB97148, 0xE6BE41DE, 0x02DAD47D, 0x0BDDE4EB, 0x10D4B551, 0x19D385C7,
@@ -44,7 +41,7 @@ T0 = [
     0xE3667A2E, 0xEA614AB8, 0xF1681B02, 0xF86F2B94, 0x1C0BBE37, 0x150C8EA1, 0x0E05DF1B, 0x0702EF8D,
 ]
 
-T1 = [
+T1: Final[list[int]] = [
     0x00000000, 0xFD653141, 0xFACA6282, 0x07AF53C3, 0x0A94C504, 0xF7F1F445, 0xF05EA786, 0x0D3B96C7,
     0x14298A08, 0xE94CBB49, 0xEEE3E88A, 0x1386D9CB, 0x1EBD4F0C, 0xE3D87E4D, 0xE4772D8E, 0x19121CCF,
     0xF2221251, 0x0F472310, 0x08E870D3, 0xF58D4192, 0xF8B6D755, 0x05D3E614, 0x027CB5D7, 0xFF198496,
@@ -79,7 +76,7 @@ T1 = [
     0xE8356BB5, 0x15505AF4, 0x12FF0937, 0xEF9A3876, 0xE2A1AEB1, 0x1FC49FF0, 0x186BCC33, 0xE50EFD72,
 ]
 
-T2 = [
+T2: Final[list[int]] = [
     0x00000000, 0xFF261437, 0xFF4C286E, 0x006A3C59, 0xFF6750DC, 0x004144EB, 0x002B78B2, 0xFF0D6C85,
     0xFECFA1B8, 0x01E9B58F, 0x018389D6, 0xFEA59DE1, 0x01A8F164, 0xFE8EE553, 0xFEE4D90A, 0x01C2CD3D,
     0x029E4370, 0xFDB85747, 0xFDD26B1E, 0x02F47F29, 0xFDF913AC, 0x02DF079B, 0x02B53BC2, 0xFD932FF5,
@@ -114,7 +111,7 @@ T2 = [
     0x1DE37268, 0xE2C5665F, 0xE2AF5A06, 0x1D894E31, 0xE28422B4, 0x1DA23683, 0x1DC80ADA, 0xE2EE1EED,
 ]
 
-T3 = [
+T3: Final[list[int]] = [
     0x00000000, 0xE242831B, 0x1EF50077, 0xFCB7836C, 0xE79AF9AF, 0x05D87AB4, 0xF96FF9D8, 0x1B2D7AC3,
     0x1544F41F, 0xF7067704, 0x0BB1F468, 0xE9F37773, 0xF2DE0DB0, 0x109C8EAB, 0xEC2B0DC7, 0x0E698EDC,
     0xF007EF7F, 0x12456C64, 0xEEF2EF08, 0x0CB06C13, 0x179D16D0, 0xF5DF95CB, 0x096816A7, 0xEB2A95BC,
@@ -149,32 +146,41 @@ T3 = [
     0xF3740A18, 0x11368903, 0xED810A6F, 0x0FC38974, 0x14EEF3B7, 0xF6AC70AC, 0x0A1BF3C0, 0xE85970DB,
 ]
 
-
-_BASE_PATTERN = np.array([21, 22, 23, 24, 25, 26], dtype=np.uint8)
-MASTER_SHIFT_PATTERN = np.resize(_BASE_PATTERN, 5 * 1024 * 1024)
-
 _UNPACK_CACHE: Dict[int, struct.Struct] = {}
 
+
 def _get_unpacker(n: int) -> struct.Struct:
+    """Retrieves or creates a cached struct unpacker for n unsigned integers.
+
+    Args:
+        n (int): Number of unsigned 32-bit integers to unpack.
+
+    Returns:
+        struct.Struct: Struct unpacker instance configured for '<nI'.
+    """
     if n not in _UNPACK_CACHE:
         _UNPACK_CACHE[n] = struct.Struct(f'<{n}I')
     return _UNPACK_CACHE[n]
 
 
-class DGDataDecodeError(Exception):
-    """Raised when invalid data format or checksum mismatch is detected."""
-    __slots__ = ()
+from lib.exceptions import CryptError
+DGDataDecodeError = CryptError
 
 
 class DGDataHash:
-    """CRC-32-like hash calculator."""
+    """CRC-32-like hash calculator using Slice-by-4 algorithm."""
     __slots__ = ("digest",)
 
     def __init__(self) -> None:
+        """Initializes the DGDataHash with a zero digest."""
         self.digest: int = 0
 
-    def update(self, data) -> None:
-        """Updates the hash using unrolled Slice-by-4 with pre-compiled structs and local scope."""
+    def update(self, data: Any) -> None:
+        """Updates the running digest with the provided byte data.
+
+        Args:
+            data (Any): Byte data or buffer-like object to update hash with.
+        """
         try:
             view = memoryview(data)
         except TypeError:
@@ -187,7 +193,6 @@ class DGDataHash:
         digest = self.digest
         chunks_count = length // 4
         
-        # Cache local variables
         vT0, vT1, vT2, vT3 = T0, T1, T2, T3
         
         if chunks_count > 0:
@@ -198,39 +203,30 @@ class DGDataHash:
             num_unrolled = chunks_count // unroll_factor
             
             for i in range(0, num_unrolled * unroll_factor, unroll_factor):
-                # 1
                 x = uint32_tuple[i] ^ digest
                 digest = vT3[x & 0xFF] ^ vT2[(x >> 8) & 0xFF] ^ vT1[(x >> 16) & 0xFF] ^ vT0[x >> 24]
                 
-                # 2
                 x = uint32_tuple[i+1] ^ digest
                 digest = vT3[x & 0xFF] ^ vT2[(x >> 8) & 0xFF] ^ vT1[(x >> 16) & 0xFF] ^ vT0[x >> 24]
                 
-                # 3
                 x = uint32_tuple[i+2] ^ digest
                 digest = vT3[x & 0xFF] ^ vT2[(x >> 8) & 0xFF] ^ vT1[(x >> 16) & 0xFF] ^ vT0[x >> 24]
                 
-                # 4
                 x = uint32_tuple[i+3] ^ digest
                 digest = vT3[x & 0xFF] ^ vT2[(x >> 8) & 0xFF] ^ vT1[(x >> 16) & 0xFF] ^ vT0[x >> 24]
                 
-                # 5
                 x = uint32_tuple[i+4] ^ digest
                 digest = vT3[x & 0xFF] ^ vT2[(x >> 8) & 0xFF] ^ vT1[(x >> 16) & 0xFF] ^ vT0[x >> 24]
                 
-                # 6
                 x = uint32_tuple[i+5] ^ digest
                 digest = vT3[x & 0xFF] ^ vT2[(x >> 8) & 0xFF] ^ vT1[(x >> 16) & 0xFF] ^ vT0[x >> 24]
                 
-                # 7
                 x = uint32_tuple[i+6] ^ digest
                 digest = vT3[x & 0xFF] ^ vT2[(x >> 8) & 0xFF] ^ vT1[(x >> 16) & 0xFF] ^ vT0[x >> 24]
                 
-                # 8
                 x = uint32_tuple[i+7] ^ digest
                 digest = vT3[x & 0xFF] ^ vT2[(x >> 8) & 0xFF] ^ vT1[(x >> 16) & 0xFF] ^ vT0[x >> 24]
             
-            # Remainder
             for i in range(num_unrolled * unroll_factor, chunks_count):
                 x = uint32_tuple[i] ^ digest
                 digest = vT3[x & 0xFF] ^ vT2[(x >> 8) & 0xFF] ^ vT1[(x >> 16) & 0xFF] ^ vT0[x >> 24]
@@ -243,74 +239,80 @@ class DGDataHash:
 
 
 class Encoder:
-    """Handles encoding of data into DGDATA format."""
+    """Obfuscation encoder for DGDATA save format."""
     __slots__ = ("hash", "data_cursor", "data_size")
 
     def __init__(self, size: int) -> None:
+        """Initializes the Encoder with the expected payload size.
+
+        Args:
+            size (int): Size of cleartext bytes to encode.
+        """
         self.hash = DGDataHash()
         self.data_cursor: int = 0
         self.data_size: int = size
 
     def digest(self, data: bytes) -> bytes:
-        """Encodes a chunk of data."""
+        """Obfuscates data using shifting values and updates CRC-like digest.
+
+        Args:
+            data (bytes): Input cleartext bytes.
+
+        Returns:
+            bytes: Encoded obfuscated bytes.
+        """
         if self.data_size > -1 and self.data_cursor + len(data) > self.data_size:
             raise ValueError("Data overflow beyond declared size")
         
-        # Hash the cleartext before it gets obfuscated
         self.hash.update(data)
-        
-        data_array = np.frombuffer(data, dtype=np.uint8)
-        length = len(data_array)
-        
-        # 1. Instantaneous Memory Slicing
-        start_idx = self.data_cursor % 6
-        if start_idx + length > len(MASTER_SHIFT_PATTERN):
-            shifts = np.resize(np.roll(_BASE_PATTERN, -start_idx), length)
-        else:
-            shifts = MASTER_SHIFT_PATTERN[start_idx : start_idx + length]
-        
-        encoded = data_array + shifts
-            
-        self.data_cursor += length
-        return encoded.tobytes()
+        cursor = self.data_cursor
+        encoded = bytes((b + (21 + (cursor + i) % 6)) & 0xFF for i, b in enumerate(data))
+        self.data_cursor += len(data)
+        return encoded
 
 
 class Decoder:
-    """Handles decoding of DGDATA formatted data."""
+    """Obfuscation decoder for DGDATA save format."""
     __slots__ = ("hash", "data_cursor", "data_size", "checksum")
 
     def __init__(self, size: int, checksum: bytes) -> None:
+        """Initializes the Decoder.
+
+        Args:
+            size (int): Expected data size, or -1 if dynamic.
+            checksum (bytes): File checksum signature to verify.
+        """
         self.hash = DGDataHash()
         self.data_cursor: int = 0
         self.data_size: int = size
         self.checksum: bytes = checksum
 
     def digest(self, data: bytes) -> bytes:
-        """Decodes a chunk of data."""
+        """De-obfuscates data using shifting values and updates running digest.
+
+        Args:
+            data (bytes): Input obfuscated bytes.
+
+        Returns:
+            bytes: Decoded cleartext bytes.
+        """
         if self.data_size > -1 and self.data_cursor + len(data) > self.data_size:
             raise ValueError("Data overflow beyond declared size")
         
-        data_array = np.frombuffer(data, dtype=np.uint8)
-        length = len(data_array)
-        
-
-        start_idx = self.data_cursor % 6
-        
-        if start_idx + length > len(MASTER_SHIFT_PATTERN):
-            shifts = np.resize(np.roll(_BASE_PATTERN, -start_idx), length)
-        else:
-            shifts = MASTER_SHIFT_PATTERN[start_idx : start_idx + length]
-        
-        decoded = data_array - shifts
-        
+        cursor = self.data_cursor
+        decoded = bytes((b - (21 + (cursor + i) % 6)) & 0xFF for i, b in enumerate(data))
         self.hash.update(decoded)
-        
-        self.data_cursor += length
-        return decoded.tobytes()
+        self.data_cursor += len(data)
+        return decoded
 
 
 def encode_to_file(data: str, file_path: str) -> None:
-    """Encodes a string to a file in DGDATA format."""
+    """Encodes cleartext string, signs with checksum, and writes to path.
+
+    Args:
+        data (str): Input string content.
+        file_path (str): File destination path to write DGDATA to.
+    """
     data_bytes = data.encode()
     encoder = Encoder(len(data_bytes))
     
@@ -329,7 +331,14 @@ def encode_to_file(data: str, file_path: str) -> None:
 
 
 def decode_from_file(filename: str) -> str:
-    """Decodes a DGDATA formatted file into a string."""
+    """Decodes a DGDATA formatted file and verifies its checksum.
+
+    Args:
+        filename (str): Source DGDATA filepath.
+
+    Returns:
+        str: Decoded cleartext string.
+    """
     with open(filename, "rb") as f:
         header = f.read(HEADER_SIZE)
         if len(header) < HEADER_SIZE or header[:6] != HEADER_MAGIC:
@@ -344,5 +353,6 @@ def decode_from_file(filename: str) -> str:
         raise DGDataDecodeError("Checksum verification failed")
         
     return decoded.decode()
+
 
 __all__ = ["decode_from_file", "encode_to_file"]

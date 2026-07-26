@@ -1,36 +1,11 @@
-# Project Specific
-Decoded/
-tmp/
+.venv
+.env
+.gitignore
+
+exports/
+backups/
+tests/
+
 Profile.save
-config.json
-newEnglish*.csv
-
-# Data (consider if these should be tracked or not)
-structs/
-sas4_datastruct/
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-.venv/
-env/
-venv/
-ENV/
-
-# IDEs
-.vscode/
-.idea/
-.project
-.pydevproject
-.settings/
-.gitignore/
-
-# AI Assistant
-.gemini/
-.agents/
-
-# PyInstaller
-build/
-dist/
-*.spec
+sas_za4tool.log
+config.toml

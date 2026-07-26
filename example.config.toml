@@ -1,0 +1,32 @@
+# SAS:ZA4Tool Configuration Template
+# Copy this file to config.toml in the same directory to initialize settings.
+
+[steam]
+# Your 17-digit Steam community/account ID (numeric)
+steam_id = "76561198155450175"
+
+# Absolute path to your Steam installation folder (optional, resolved via registry by default)
+steam_path = ""
+
+[game]
+# Absolute path to your SAS:ZA4 Profile.save file on disk
+save_path = ""
+
+# SAS:ZA4 executable path or Steam App launch URI (defaults to launching via Steam URI)
+game_path = "steam://run/678800"
+
+[tool]
+# List of character profiles found in the save file (populated during setup)
+active_profiles = []
+
+# Default active profile selected for editing (e.g. "Profile0")
+current_profile = ""
+
+# Flag indicating if the setup wizard has been completed successfully
+setup_done = false
+
+# Enable logger output writing to sas_za4tool.log in the root directory
+logs_enabled = false
+
+# Enable automatic update checker on launch
+check_updates = true
