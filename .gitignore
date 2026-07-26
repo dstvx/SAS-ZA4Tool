@@ -9,3 +9,9 @@ tests/
 Profile.save
 sas_za4tool.log
 config.toml
+
+# Nuitka build outputs
+SASZA4Tool.exe
+*.build/
+*.dist/
+*.onefile-build/

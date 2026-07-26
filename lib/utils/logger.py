@@ -11,7 +11,8 @@ def setup_logger() -> None:
     logger.handlers.clear()
     
     if getattr(config, "logs_enabled", False):
-        log_file: Path = Path(__file__).resolve().parent.parent.parent / "sas_za4tool.log"
+        from lib.config.config import PROJECT_ROOT
+        log_file: Path = PROJECT_ROOT / "sas_za4tool.log"
         handler: logging.FileHandler = logging.FileHandler(log_file, encoding="utf-8")
         handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
         logger.addHandler(handler)

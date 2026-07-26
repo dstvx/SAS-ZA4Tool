@@ -219,7 +219,23 @@ class Config:
             logger.info(f"Deleted config key: {key}")
 
 
-PROJECT_ROOT: Final[Path] = Path(__file__).resolve().parent.parent.parent
+def _get_project_root() -> Path:
+    import sys
+    is_compiled = False
+    if hasattr(sys, "frozen") or getattr(sys, "readcompiled", False) or "__compiled__" in globals():
+        is_compiled = True
+    else:
+        try:
+            import builtins
+            is_compiled = hasattr(builtins, "__compiled__")
+        except ImportError:
+            pass
+    if is_compiled:
+        return Path(sys.argv[0]).resolve().parent
+    return Path(__file__).resolve().parent.parent.parent
+
+
+PROJECT_ROOT: Final[Path] = _get_project_root()
 DEFAULT_TOML_PATH: Final[Path] = PROJECT_ROOT / "config.toml"
 
 config: Final[Config] = Config(DEFAULT_TOML_PATH)
