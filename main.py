@@ -10,6 +10,20 @@ def main() -> None:
     from lib.config import config
     from lib.exceptions import CancelError
 
+    if config.setup_done:
+        errors = config.validate()
+        critical_errors = [e for e in errors if e.startswith("Critical:")]
+        if critical_errors:
+            print("\n[WARNING] Configuration validation failed:")
+            for err in errors:
+                print(f"  - {err}")
+            print("\nResetting setup state. Starting setup wizard...")
+            try:
+                input("Press Enter to run Setup...")
+            except KeyboardInterrupt:
+                sys.exit(0)
+            config.update(setup_done=False)
+
     if not config.setup_done:
         try:
             from lib.utils.setup import run_setup

@@ -218,6 +218,43 @@ class Config:
             self._save_file()
             logger.info(f"Deleted config key: {key}")
 
+    def validate(self) -> List[str]:
+        """Validates critical and secondary configuration parameters.
+
+        Returns:
+            List[str]: A list of warning/error messages. Empty if validation passes.
+        """
+        errors: List[str] = []
+
+        save_path_str: str = self._data.get("save_path", "")
+        if not save_path_str:
+            errors.append("Critical: Save path ('save_path') is empty.")
+        else:
+            p = Path(save_path_str)
+            if not p.exists():
+                errors.append(f"Critical: Save path does not exist: {save_path_str}")
+            elif not p.is_file():
+                errors.append(f"Critical: Save path is not a file: {save_path_str}")
+
+        steam_id_str: str = str(self._data.get("steam_id", ""))
+        if not steam_id_str:
+            errors.append("Critical: Steam ID ('steam_id') is empty.")
+        elif not steam_id_str.isdigit():
+            errors.append(f"Critical: Steam ID ('steam_id') must be a numeric string, got: '{steam_id_str}'")
+
+        steam_path_str: str = self._data.get("steam_path", "")
+        if steam_path_str:
+            sp = Path(steam_path_str)
+            if not sp.exists():
+                errors.append(f"Warning: Steam path does not exist: {steam_path_str}")
+
+        current_profile: str = self._data.get("current_profile", "")
+        active_profiles: list[str] = self._data.get("active_profiles", [])
+        if current_profile and current_profile not in active_profiles:
+            errors.append(f"Warning: Selected profile '{current_profile}' is not in active profiles list: {active_profiles}")
+
+        return errors
+
 
 def _get_project_root() -> Path:
     import sys
