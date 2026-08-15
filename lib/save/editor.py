@@ -269,16 +269,17 @@ class ProfileProxy:
                 "UseDefaultOpenLogic": True,
             }
         else:
+            equip_type = slot if slot >= 0 else self._editor._get_armour_slot(item_id)
             item_dict = {
                 "ID": item_id,
                 "EquipVersion": version,
                 "Grade": grade,
-                "EquippedSlot": slot if slot >= 0 else -1,
+                "EquippedSlot": equip_type,
                 "AugmentSlots": augs,
-                "InventoryIndex": 0,
+                "InventoryIndex": equip_type,
                 "Seen": False,
                 "BonusStatsLevel": bonus,
-                "Equipped": (slot >= 0),
+                "Equipped": False,
                 "ContainsKey": False,
                 "ContainsAugmentCore": False,
                 "BlackStrongboxSeed": 0,
@@ -956,27 +957,27 @@ class Editor:
             return {}
 
     def _get_armour_slot(self, item_id: int) -> int:
-        """Returns the equipment slot (0=helmet, 1=vest, 2=gloves, 3=pants, 4=boots) for an armour item ID."""
+        """Returns the SAS4 equipment slot (1=helmet, 2=vest, 3=gloves, 4=boots, 5=pants) for an armour item ID."""
         slot_map: dict[str, int] = {
-            "helmet": 0,
-            "vest": 1,
-            "gloves": 2,
-            "pants": 3,
+            "helmet": 1,
+            "vest": 2,
+            "gloves": 3,
             "boots": 4,
+            "pants": 5,
         }
         items_path = Path(__file__).resolve().parent.parent / "data" / "items.json"
         try:
             with open(items_path, "r", encoding="utf-8") as f:
                 items_data = json.load(f)
             for subcat, variants in items_data.get("armour", {}).items():
-                slot_idx = slot_map.get(subcat.lower(), 0)
+                slot_idx = slot_map.get(subcat.lower(), 1)
                 for variant_items in variants.values():
                     for item in variant_items:
                         if item.get("ID") == item_id:
                             return slot_idx
         except (OSError, json.JSONDecodeError, KeyError, ValueError):
             pass
-        return 0
+        return 1
 
                                         
 

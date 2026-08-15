@@ -186,8 +186,8 @@ class TestSaveEditorFeatures(unittest.TestCase):
         newest = claimed[-1]
         self.assertFalse(newest["is_weapon"])
         self.assertEqual(newest["data"]["ID"], 214)
-        self.assertEqual(newest["data"]["EquippedSlot"], -1)
-        self.assertEqual(newest["data"]["InventoryIndex"], 0)
+        self.assertEqual(newest["data"]["EquippedSlot"], 4)
+        self.assertEqual(newest["data"]["InventoryIndex"], 4)
         self.assertEqual(newest["data"]["AugmentSlots"], 3)
         self.assertEqual(newest["data"]["BonusStatsLevel"], 7)
         self.assertFalse(newest["data"]["Equipped"])
