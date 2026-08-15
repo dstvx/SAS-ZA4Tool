@@ -1,9 +1,9 @@
 from .config import (
-    config,
     Config,
+    config,
 )
 
 __all__ = [
-    "config",
     "Config",
+    "config",
 ]

@@ -1,7 +1,8 @@
-import tomllib
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Final
+from typing import Any, Final
+
+import tomllib
 
 logger: Final[logging.Logger] = logging.getLogger("sas_za4tool")
 
@@ -34,7 +35,7 @@ def _serialize_value(value: Any) -> str:
 class Config:
     """Stores, loads, and manages configuration parameters in a TOML file."""
     
-    DEFAULT_CONFIG: Final[Dict[str, Any]] = {
+    DEFAULT_CONFIG: Final[dict[str, Any]] = {
         "steam_id": "",
         "steam_path": "",
         "save_path": "",
@@ -55,7 +56,7 @@ class Config:
         super().__setattr__("_filepath", filepath)
         super().__setattr__("_data", self._load_file())
 
-    def _load_file(self) -> Dict[str, Any]:
+    def _load_file(self) -> dict[str, Any]:
         """Loads and parses the TOML configuration file.
 
         Returns:
@@ -67,8 +68,8 @@ class Config:
 
         try:
             with open(self._filepath, "rb") as f:
-                data: Dict[str, Any] = tomllib.load(f)
-            flat_data: Dict[str, Any] = {}
+                data: dict[str, Any] = tomllib.load(f)
+            flat_data: dict[str, Any] = {}
             def flatten(d: dict[str, Any]) -> None:
                 for k, v in d.items():
                     if isinstance(v, dict):
@@ -85,18 +86,18 @@ class Config:
     def _save_file(self) -> None:
         """Saves the active configuration state back to the TOML file."""
         self._filepath.parent.mkdir(parents=True, exist_ok=True)
-        sections: Dict[str, List[str]] = {
+        sections: dict[str, list[str]] = {
             "steam": ["steam_id", "steam_path"],
             "game": ["save_path", "game_path"],
             "tool": ["active_profiles", "current_profile", "setup_done", "logs_enabled", "check_updates"]
         }
         
         known_keys: set[str] = set(sections["steam"] + sections["game"] + sections["tool"])
-        for k in self._data.keys():
+        for k in self._data:
             if k not in known_keys:
                 sections["tool"].append(k)
                 
-        lines: List[str] = []
+        lines: list[str] = []
         for section, keys in sections.items():
             lines.append(f"[{section}]")
             for k in keys:
@@ -108,7 +109,7 @@ class Config:
             with open(self._filepath, "w", encoding="utf-8") as f:
                 f.write("\n".join(lines))
             logger.info(f"Saved config updates to {self._filepath}")
-        except Exception as e:
+        except OSError as e:
             logger.error(f"Failed to save config: {e}")
 
     def _update_value(self, name: str, value: Any) -> None:
@@ -147,11 +148,11 @@ class Config:
         self._update_value("save_path", value)
 
     @property
-    def active_profiles(self) -> List[str]:
+    def active_profiles(self) -> list[str]:
         return self._data.get("active_profiles", [])
 
     @active_profiles.setter
-    def active_profiles(self, value: List[str]) -> None:
+    def active_profiles(self, value: list[str]) -> None:
         self._update_value("active_profiles", value)
 
     @property
@@ -218,13 +219,13 @@ class Config:
             self._save_file()
             logger.info(f"Deleted config key: {key}")
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """Validates critical and secondary configuration parameters.
 
         Returns:
             List[str]: A list of warning/error messages. Empty if validation passes.
         """
-        errors: List[str] = []
+        errors: list[str] = []
 
         save_path_str: str = self._data.get("save_path", "")
         if not save_path_str:

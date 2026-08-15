@@ -1,11 +1,19 @@
-from typing import Optional, List, Dict, Any, Final
-from lib.ui.ui import draw_menu, get_key, prompt_int, prompt_str, prompt_confirm, get_option_description
-from lib.exceptions import CancelError
+from typing import Any, Final
+
+from lib.exceptions import CancelError, CryptError, SAS_ZA4ToolError, SaveError
 from lib.save.editor import Editor
+from lib.ui.ui import (
+    draw_menu,
+    get_key,
+    get_option_description,
+    launch_game,
+    prompt_confirm,
+    prompt_int,
+)
 from lib.utils.logger import logger
 
 
-def handle_global_menu(editor: Editor) -> Optional[str]:
+def handle_global_menu(editor: Editor) -> str | None:
     """Displays and processes choices within the Global & Account Save Editor.
 
     Args:
@@ -17,7 +25,7 @@ def handle_global_menu(editor: Editor) -> Optional[str]:
     selected_idx: int = 0
     message: str = ""
     
-    premium_guns: Final[List[str]] = [
+    premium_guns: Final[list[str]] = [
         "sas4_ahab", "sas4_banshee", "sas4_bayonet", "sas4_calamity",
         "sas4_cm000kelvin", "sas4_cm352quasar", "sas4_cm369starfury",
         "sas4_cm467", "sas4_cm505alphaltdedition", "sas4_cmlaserdrill",
@@ -36,11 +44,11 @@ def handle_global_menu(editor: Editor) -> Optional[str]:
             faction: str = editor.get_global("CurrentFactionWarFaction", "None")
             fw_credits: int = editor.get_global("FactionWarCredits", 0)
 
-            raw_save: Dict[str, Any] = editor._load()
-            iap_array: List[Dict[str, Any]] = raw_save.get("PurchasedIAP", {}).get("PurchasedIAPArray", [])
+            raw_save: dict[str, Any] = editor._load()
+            iap_array: list[dict[str, Any]] = raw_save.get("PurchasedIAP", {}).get("PurchasedIAPArray", [])
 
-            s1: Optional[Dict[str, Any]] = next((x for x in iap_array if x.get("Identifier") == "SAS4_CharacterSlot1"), None)
-            s2: Optional[Dict[str, Any]] = next((x for x in iap_array if x.get("Identifier") == "SAS4_CharacterSlot2"), None)
+            s1: dict[str, Any] | None = next((x for x in iap_array if x.get("Identifier") == "SAS4_CharacterSlot1"), None)
+            s2: dict[str, Any] | None = next((x for x in iap_array if x.get("Identifier") == "SAS4_CharacterSlot2"), None)
             slots_active: bool = bool(s1 and s1.get("Value") and s2 and s2.get("Value"))
 
             fg1: Any = len(iap_array) > 15 and iap_array[15].get("Identifier") == "sas4_fairgroundpack_1" and iap_array[15].get("Value")
@@ -52,12 +60,12 @@ def handle_global_menu(editor: Editor) -> Optional[str]:
                 if any(x.get("Identifier") == g and x.get("Value") for x in iap_array)
             )
             guns_active: bool = (guns_unlocked == len(premium_guns))
-        except Exception as e:
+        except (SaveError, KeyError, ValueError, TypeError, IndexError) as e:
             logger.error(f"Failed to read globals: {e}")
             tokens, tickets, ads, faction, fw_credits = 0, 0, False, "None", 0
             slots_active, fg_active, guns_active, guns_unlocked = False, False, False, 0
 
-        options: List[str] = [
+        options: list[str] = [
             f"Revive Tokens (Current: {tokens})",
             f"Nightmare Tickets (Current: {tickets})",
             f"Remove Ads Toggle (Current: {ads})",
@@ -84,6 +92,8 @@ def handle_global_menu(editor: Editor) -> Optional[str]:
             selected_idx = (selected_idx + 1) % len(options)
         elif key in ("backspace", "esc", "left"):
             return None
+        elif key == "ctrl+x":
+            message = launch_game()
         elif key == "ctrl+i":
             message = get_option_description(options[selected_idx])
         elif key in ("enter", "space", "right") or key.isdigit() or (len(key) == 1 and key.isalpha()):
@@ -110,7 +120,7 @@ def handle_global_menu(editor: Editor) -> Optional[str]:
                     editor.globals.remove_ads = not ads
                     message = f"Ads removal status set to {not ads}."
                 elif idx == 3:
-                    sub_opts: List[str] = ["Unlock Weapons Only", "Unlock Armor Only", "Unlock Rewards Only", "Unlock All Collections", "Cancel"]
+                    sub_opts: list[str] = ["Unlock Weapons Only", "Unlock Armor Only", "Unlock Rewards Only", "Unlock All Collections", "Cancel"]
                     sub_sel: int = 0
                     while True:
                         draw_menu("Granular Collection Unlocks", sub_opts, sub_sel, breadcrumb="Main Menu > Global Editor > Collections")
@@ -178,7 +188,7 @@ def handle_global_menu(editor: Editor) -> Optional[str]:
                         raw_save = editor._load()
                         iap_array = raw_save.setdefault("PurchasedIAP", {}).setdefault("PurchasedIAPArray", [])
                         for g in premium_guns:
-                            match: Optional[Dict[str, Any]] = next((item for item in iap_array if item.get("Identifier") == g), None)
+                            match: dict[str, Any] | None = next((item for item in iap_array if item.get("Identifier") == g), None)
                             if match:
                                 match["Value"] = False
                         editor._save(raw_save)
@@ -187,7 +197,7 @@ def handle_global_menu(editor: Editor) -> Optional[str]:
                         editor.globals.unlock_all_premium_guns()
                         message = "All premium weapons unlocked globally."
                 elif idx == 8:
-                    factions: List[str] = ["CENTURIONS", "CORSAIRS", "GUARDIANS", "NOMADS", "OUTLAWS", "RANGERS", "SPARTANS", "VANGUARD"]
+                    factions: list[str] = ["CENTURIONS", "CORSAIRS", "GUARDIANS", "NOMADS", "OUTLAWS", "RANGERS", "SPARTANS", "VANGUARD"]
                     fac_idx: int = 0
                     while True:
                         draw_menu("Select Faction to Join", factions + ["Leave Faction", "Cancel"], fac_idx, breadcrumb="Main Menu > Global Editor > Faction Join")
@@ -215,7 +225,7 @@ def handle_global_menu(editor: Editor) -> Optional[str]:
                                 message = f"Joined faction: {factions[target_idx]}."
                                 break
                 elif idx == 9:
-                    planets: List[str] = ["ZETA", "EPSILON", "SIGMA", "XI", "OMICRON", "Faction War", "All", "Cancel"]
+                    planets: list[str] = ["ZETA", "EPSILON", "SIGMA", "XI", "OMICRON", "Faction War", "All", "Cancel"]
                     plan_idx: int = 0
                     while True:
                         draw_menu("Select Faction Credits Target", planets, plan_idx, breadcrumb="Main Menu > Global Editor > Faction Credits")
@@ -243,6 +253,7 @@ def handle_global_menu(editor: Editor) -> Optional[str]:
                     return None
             except CancelError:
                 message = "Action cancelled."
-            except Exception as e:
+            except (SaveError, CryptError, SAS_ZA4ToolError, OSError, ValueError, KeyError, TypeError, IndexError) as e:
                 logger.error(f"Global operation failed: {e}")
                 message = f"Error: {e}"
+

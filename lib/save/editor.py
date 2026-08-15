@@ -1,11 +1,11 @@
 import json
 import random
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from lib.config import config
 from lib.crypt import decode_from_file, encode_to_file
-from lib.exceptions import SaveError, ProfileNotFoundError
+from lib.exceptions import CryptError, ProfileNotFoundError, SaveError
 from lib.utils.logger import logger
 
 XP_THRESHOLDS = [
@@ -29,11 +29,11 @@ class ProfileProxy:
         self._editor = editor
         self._profile_key = profile_key
 
-    def set(self, key_path: str | List[str], value: Any) -> None:
+    def set(self, key_path: str | list[str], value: Any) -> None:
         """Sets a value inside this profile."""
         self._editor.set_profile_value(self._profile_key, key_path, value)
 
-    def get(self, key_path: str | List[str], default: Any = None) -> Any:
+    def get(self, key_path: str | list[str], default: Any = None) -> Any:
         """Gets a value from this profile."""
         return self._editor.get_profile_value(self._profile_key, key_path, default)
 
@@ -119,7 +119,7 @@ class ProfileProxy:
         self.set(["Ammo", "grenades_cryo"], value)
 
                                       
-    def get_available_turrets(self) -> List[Dict[str, Any]]:
+    def get_available_turrets(self) -> list[dict[str, Any]]:
         """Returns the list of available turrets based on player level tier."""
         level = self.level
         items_path = Path(__file__).resolve().parent.parent / "data" / "items.json"
@@ -128,7 +128,7 @@ class ProfileProxy:
                 items_data = json.load(f)
             category = "normal" if level <= 30 else "red"
             return items_data.get("turret", {}).get(category, [])
-        except Exception:
+        except (OSError, json.JSONDecodeError, KeyError, ValueError):
             return []
 
     def set_turret_count(self, turret_id: int, count: int) -> None:
@@ -253,22 +253,38 @@ class ProfileProxy:
         if not (0 <= augs <= max_augs):
             raise ValueError(f"Augment slots must be in [0, {max_augs}].")
 
-        item_dict = {
-            "ID": item_id,
-            "EquipVersion": version,
-            "Grade": grade,
-            "EquippedSlot": slot,
-            "AugmentSlots": augs,
-            "InventoryIndex": 0,
-            "Seen": True,
-            "BonusStatsLevel": bonus,
-            "ContainsKey": False,
-            "ContainsAugmentCore": False,
-            "BlackStrongboxSeed": 0,
-            "UseDefaultOpenLogic": True,
-        }
-        if not is_weapon:
-            item_dict["Equipped"] = False
+        if is_weapon:
+            item_dict: dict[str, Any] = {
+                "ID": item_id,
+                "EquipVersion": version,
+                "Grade": grade,
+                "EquippedSlot": slot if slot >= 0 else -1,
+                "AugmentSlots": augs,
+                "InventoryIndex": 0,
+                "Seen": True,
+                "BonusStatsLevel": bonus,
+                "ContainsKey": False,
+                "ContainsAugmentCore": False,
+                "BlackStrongboxSeed": 0,
+                "UseDefaultOpenLogic": True,
+            }
+        else:
+            equip_type = slot if slot >= 0 else self._editor._get_armour_slot(item_id)
+            item_dict = {
+                "ID": item_id,
+                "EquipVersion": version,
+                "Grade": grade,
+                "EquippedSlot": equip_type,
+                "AugmentSlots": augs,
+                "InventoryIndex": equip_type,
+                "Seen": True,
+                "BonusStatsLevel": bonus,
+                "Equipped": False,
+                "ContainsKey": False,
+                "ContainsAugmentCore": False,
+                "BlackStrongboxSeed": 0,
+                "UseDefaultOpenLogic": True,
+            }
 
         data = self._editor._load()
         claimed = (
@@ -278,13 +294,11 @@ class ProfileProxy:
             .setdefault("Claimed", [])
         )
 
-                                                                                        
         claimed.append(0 if is_weapon else 1)
         claimed.append(item_dict)
         claimed.append(8)
         claimed.append(2)
 
-                                                                     
         if is_weapon:
             premium_map = self._editor._get_premium_weapons()
             if item_id in premium_map:
@@ -320,29 +334,44 @@ class ProfileProxy:
         if not (0 <= augs <= max_augs):
             raise ValueError(f"Augment slots must be in [0, {max_augs}].")
 
-        item_dict: Dict[str, Any] = {
-            "ID": item_id,
-            "EquipVersion": version,
-            "Grade": grade,
-            "EquippedSlot": slot,
-            "AugmentSlots": augs,
-            "InventoryIndex": 0,
-            "Seen": True,
-            "BonusStatsLevel": bonus,
-            "ContainsKey": False,
-            "ContainsAugmentCore": False,
-            "BlackStrongboxSeed": 0,
-            "UseDefaultOpenLogic": True,
-        }
-        if not is_weapon:
-            item_dict["Equipped"] = False
-
         data = self._editor._load()
         inventory = data.setdefault("Inventory", {}).setdefault(self._profile_key, {})
         category: str = "Weapons" if is_weapon else "Equipment"
-        item_list: List[Dict[str, Any]] = inventory.setdefault(category, [])
-        
-        item_dict["InventoryIndex"] = len(item_list)
+        item_list: list[dict[str, Any]] = inventory.setdefault(category, [])
+
+        if is_weapon:
+            item_dict: dict[str, Any] = {
+                "ID": item_id,
+                "EquipVersion": version,
+                "Grade": grade,
+                "EquippedSlot": slot if slot >= 0 else -1,
+                "AugmentSlots": augs,
+                "InventoryIndex": len(item_list),
+                "Seen": True,
+                "BonusStatsLevel": bonus,
+                "ContainsKey": False,
+                "ContainsAugmentCore": False,
+                "BlackStrongboxSeed": 0,
+                "UseDefaultOpenLogic": True,
+            }
+        else:
+            equip_type = slot if slot >= 0 else self._editor._get_armour_slot(item_id)
+            item_dict = {
+                "ID": item_id,
+                "EquipVersion": version,
+                "Grade": grade,
+                "EquippedSlot": equip_type,
+                "AugmentSlots": augs,
+                "InventoryIndex": len(item_list),
+                "Seen": True,
+                "BonusStatsLevel": bonus,
+                "Equipped": False,
+                "ContainsKey": False,
+                "ContainsAugmentCore": False,
+                "BlackStrongboxSeed": 0,
+                "UseDefaultOpenLogic": True,
+            }
+
         item_list.append(item_dict)
 
         if is_weapon:
@@ -386,7 +415,7 @@ class ProfileProxy:
         self.set(["Strongboxes", "Claimed"], [])
         self.set(["Skills", "AvailableBlackStrongboxes"], [])
 
-    def set_black_boxes(self, count_or_seeds: int | List[int]) -> None:
+    def set_black_boxes(self, count_or_seeds: int | list[int]) -> None:
         """Overwrites the available black strongbox array with random seeds or a direct list of seeds."""
         if isinstance(count_or_seeds, int):
             if count_or_seeds < 0:
@@ -399,7 +428,7 @@ class ProfileProxy:
 
         self.set(["Skills", "AvailableBlackStrongboxes"], new_seeds)
 
-    def add_black_boxes(self, count_or_seeds: int | List[int]) -> None:
+    def add_black_boxes(self, count_or_seeds: int | list[int]) -> None:
         """Appends new random black box seeds or a direct list of seeds to the character's available black box array."""
         if isinstance(count_or_seeds, int):
             if count_or_seeds < 0:
@@ -416,7 +445,7 @@ class ProfileProxy:
 
         self.set(["Skills", "AvailableBlackStrongboxes"], current_boxes + new_seeds)
 
-    def get_claimed_strongboxes(self) -> List[Dict[str, Any]]:
+    def get_claimed_strongboxes(self) -> list[dict[str, Any]]:
         """Returns the list of pending items in the claimed strongboxes queue."""
         data = self._editor._load()
         claimed = (
@@ -425,7 +454,7 @@ class ProfileProxy:
             .setdefault("Strongboxes", {})
             .setdefault("Claimed", [])
         )
-        items: List[Dict[str, Any]] = []
+        items: list[dict[str, Any]] = []
         for i in range(0, len(claimed), 4):
             if i + 1 < len(claimed):
                 item_data = claimed[i + 1]
@@ -500,7 +529,7 @@ class ProfileProxy:
         if not (0 <= list_index < len(item_list)):
             raise IndexError("Item index out of range.")
 
-        item: Dict[str, Any] = item_list[list_index]
+        item: dict[str, Any] = item_list[list_index]
         item["Grade"] = grade
         item["AugmentSlots"] = augs
         item["BonusStatsLevel"] = bonus
@@ -740,9 +769,22 @@ class Editor:
     """Coordinates reading, writing, and providing namespace proxies to edit save data (SOLID SRP)."""
 
     def __init__(self, filepath: str | Path = "") -> None:
-        self._filepath = Path(filepath) if filepath else None
-                                                                                                 
-        self._cache: Optional[Dict[str, Any]] = None
+        self._filepath: Path | None = Path(filepath) if filepath else None
+        self._data: dict[str, Any] | None = None
+        # Auto-load decoded copy into memory if valid save file exists
+        try:
+            if self._has_valid_filepath():
+                self._data = self._load()
+        except (SaveError, CryptError, OSError, json.JSONDecodeError, KeyError, ValueError):
+            self._data = None
+
+    def _has_valid_filepath(self) -> bool:
+        """Checks if a valid save file path is currently configured."""
+        try:
+            path = self._filepath or Path(config.save_path)
+            return bool(path and str(path) != "." and path.is_file())
+        except (OSError, ValueError, TypeError):
+            return False
 
     def _get_filepath(self) -> Path:
         """Resolves the current filepath, falling back to config if not provided."""
@@ -751,37 +793,64 @@ class Editor:
             raise SaveError(f"Save file path '{path}' is invalid or does not exist.")
         return path
 
-    def _load(self) -> Dict[str, Any]:
-        """Loads and decrypts save file data."""
-        cache = self._cache
-        if cache is not None:
-            return cache
+    @property
+    def data(self) -> dict[str, Any]:
+        """Gets the internal decoded working copy of the save file."""
+        return self._load()
+
+    def get_data(self) -> dict[str, Any]:
+        """Returns the internal decoded working copy of the save data."""
+        return self._load()
+
+    def reload(self) -> dict[str, Any]:
+        """Forces reloading and decrypting the save file from disk into memory."""
+        self._data = None
+        return self._load()
+
+    def export_json(self, export_path: str | Path, indent: int = 4) -> Path:
+        """Exports the in-memory decoded save copy directly to a JSON file.
+
+        Args:
+            export_path (str | Path): Destination JSON filepath.
+            indent (int): JSON indentation spaces.
+
+        Returns:
+            Path: Path object of exported JSON file.
+        """
+        dest = Path(export_path)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        with open(dest, "w", encoding="utf-8") as f:
+            json.dump(self._load(), f, indent=indent)
+        logger.info(f"Exported decoded save data to {dest}")
+        return dest
+
+    def _load(self) -> dict[str, Any]:
+        """Loads and decrypts save file data into the working copy."""
+        if self._data is not None:
+            return self._data
 
         filepath = self._get_filepath()
         try:
             decoded_str = decode_from_file(str(filepath))
-            decoded_json = json.loads(decoded_str)
-            self._cache = decoded_json
+            decoded_json: dict[str, Any] = json.loads(decoded_str)
+            self._data = decoded_json
             logger.info(f"Loaded and decrypted save file from disk: {filepath}")
             return decoded_json
         except Exception as e:
             logger.error(f"Failed to load or decrypt save file: {e}")
             raise SaveError(f"Failed to load or decrypt save file: {e}") from e
 
-    def _save(self, data: Dict[str, Any]) -> None:
-        """Encrypts and writes save file data back to disk."""
-        self._cache = data
+    def _save(self, data: dict[str, Any]) -> None:
+        """Encrypts and writes save file data back to disk while keeping in-memory copy synced."""
+        self._data = data
         filepath = self._get_filepath()
         try:
-                                                                            
             json_str = json.dumps(data, separators=(",", ":"))
             encode_to_file(json_str, str(filepath))
             logger.info(f"Encrypted and wrote save file changes to disk: {filepath}")
         except Exception as e:
             logger.error(f"Failed to encrypt or write save file: {e}")
             raise SaveError(f"Failed to encrypt or write save file: {e}") from e
-
-                               
 
     @property
     def globals(self) -> GlobalProxy:
@@ -790,16 +859,13 @@ class Editor:
 
     def profile(self, key: str) -> ProfileProxy:
         """Access profile-specific attributes and operations."""
-                                                                       
         inventory = self._load().get("Inventory", {})
         if key not in inventory or not inventory[key].get("Loaded"):
             raise ProfileNotFoundError(f"Profile '{key}' is not active or loaded.")
         logger.info(f"Initialized ProfileProxy for {key}")
         return ProfileProxy(self, key)
 
-                                                       
-
-    def get_loaded_profiles(self) -> List[str]:
+    def get_loaded_profiles(self) -> list[str]:
         """Returns list of profile keys (e.g. Profile0) that are currently loaded."""
         data = self._load()
         inventory = data.get("Inventory", {})
@@ -813,12 +879,12 @@ class Editor:
 
         return loaded_profiles
 
-    def sync(self) -> List[str]:
-        """Clears memory cache, scans loaded profiles and updates active_profiles in config.toml."""
-        self._cache = None
+    def sync(self) -> list[str]:
+        """Synchronizes active profiles list with config without forcing disk re-decode."""
         loaded = self.get_loaded_profiles()
         config.active_profiles = loaded
         return loaded
+
 
                                                               
 
@@ -826,7 +892,7 @@ class Editor:
         """Gets a property value from the nested 'Global' dictionary."""
         try:
             return self._load().get("Global", {}).get(key, default)
-        except Exception:
+        except (SaveError, CryptError, KeyError, TypeError, OSError):
             return default
 
     def set_global_property(self, key: str, value: Any) -> None:
@@ -880,7 +946,7 @@ class Editor:
 
         self._save(data)
 
-    def _get_premium_weapons(self) -> Dict[int, str]:
+    def _get_premium_weapons(self) -> dict[int, str]:
         """Returns mapping of premium weapon ID to its IAP identifier."""
         items_path = Path(__file__).resolve().parent.parent / "data" / "items.json"
         try:
@@ -888,7 +954,7 @@ class Editor:
                 items_data = json.load(f)
 
             premium_map = {}
-            for category_key, category_data in items_data.get("weapons", {}).items():
+            for category_data in items_data.get("weapons", {}).values():
                 for item in category_data.get("premium", []):
                     item_id = item.get("ID")
                     item_name = item.get("Name", "")
@@ -896,12 +962,35 @@ class Editor:
                         iap_id = f"sas4_{item_name.lower().replace('.', '').replace(' ', '')}"
                         premium_map[item_id] = iap_id
             return premium_map
-        except Exception:
+        except (OSError, json.JSONDecodeError, KeyError, ValueError):
             return {}
+
+    def _get_armour_slot(self, item_id: int) -> int:
+        """Returns the equipment slot (0=helmet, 1=vest, 2=gloves, 3=pants, 4=boots) for an armour item ID."""
+        slot_map: dict[str, int] = {
+            "helmet": 0,
+            "vest": 1,
+            "gloves": 2,
+            "pants": 3,
+            "boots": 4,
+        }
+        items_path = Path(__file__).resolve().parent.parent / "data" / "items.json"
+        try:
+            with open(items_path, "r", encoding="utf-8") as f:
+                items_data = json.load(f)
+            for subcat, variants in items_data.get("armour", {}).items():
+                slot_idx = slot_map.get(subcat.lower(), 0)
+                for variant_items in variants.values():
+                    for item in variant_items:
+                        if item.get("ID") == item_id:
+                            return slot_idx
+        except (OSError, json.JSONDecodeError, KeyError, ValueError):
+            pass
+        return 0
 
                                         
 
-    def set_profile_value(self, profile_key: str, key_path: str | List[str], value: Any) -> None:
+    def set_profile_value(self, profile_key: str, key_path: str | list[str], value: Any) -> None:
         """Sets a value inside a specific loaded profile, supporting nested key paths."""
         data = self._load()
         profile = data.get("Inventory", {}).get(profile_key)
@@ -921,7 +1010,7 @@ class Editor:
 
         self._save(data)
 
-    def get_profile_value(self, profile_key: str, key_path: str | List[str], default: Any = None) -> Any:
+    def get_profile_value(self, profile_key: str, key_path: str | list[str], default: Any = None) -> Any:
         """Gets a value from a specific loaded profile, supporting nested key paths."""
         data = self._load()
         profile = data.get("Inventory", {}).get(profile_key)

@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 from typing import Final
+
 from lib.config import config
 
 logger: Final[logging.Logger] = logging.getLogger("sas_za4tool")

@@ -1,6 +1,5 @@
-from typing import Final, Dict, Any
-import os
 import struct
+from typing import Any, Final
 
 HEADER_SIZE: Final[int] = 14
 CHECKSUM_SIZE: Final[int] = HEADER_SIZE - 6
@@ -146,7 +145,7 @@ T3: Final[list[int]] = [
     0xF3740A18, 0x11368903, 0xED810A6F, 0x0FC38974, 0x14EEF3B7, 0xF6AC70AC, 0x0A1BF3C0, 0xE85970DB,
 ]
 
-_UNPACK_CACHE: Dict[int, struct.Struct] = {}
+_UNPACK_CACHE: dict[int, struct.Struct] = {}
 
 
 def _get_unpacker(n: int) -> struct.Struct:
@@ -164,6 +163,7 @@ def _get_unpacker(n: int) -> struct.Struct:
 
 
 from lib.exceptions import CryptError
+
 DGDataDecodeError = CryptError
 
 
@@ -238,9 +238,19 @@ class DGDataHash:
         self.digest = digest & 0xFFFFFFFF
 
 
+_TRANS_ENC: Final[tuple[bytes, ...]] = tuple(
+    bytes.maketrans(bytes(range(256)), bytes((b + 21 + i) % 256 for b in range(256)))
+    for i in range(6)
+)
+_TRANS_DEC: Final[tuple[bytes, ...]] = tuple(
+    bytes.maketrans(bytes(range(256)), bytes((b - 21 - i) % 256 for b in range(256)))
+    for i in range(6)
+)
+
+
 class Encoder:
     """Obfuscation encoder for DGDATA save format."""
-    __slots__ = ("hash", "data_cursor", "data_size")
+    __slots__ = ("data_cursor", "data_size", "hash")
 
     def __init__(self, size: int) -> None:
         """Initializes the Encoder with the expected payload size.
@@ -263,17 +273,20 @@ class Encoder:
         """
         if self.data_size > -1 and self.data_cursor + len(data) > self.data_size:
             raise ValueError("Data overflow beyond declared size")
-        
+
         self.hash.update(data)
-        cursor = self.data_cursor
-        encoded = bytes((b + (21 + (cursor + i) % 6)) & 0xFF for i, b in enumerate(data))
+        ba = bytearray(data)
+        cursor_offset = self.data_cursor % 6
+        for phase in range(6):
+            eff_phase = (phase + cursor_offset) % 6
+            ba[phase::6] = ba[phase::6].translate(_TRANS_ENC[eff_phase])
         self.data_cursor += len(data)
-        return encoded
+        return bytes(ba)
 
 
 class Decoder:
     """Obfuscation decoder for DGDATA save format."""
-    __slots__ = ("hash", "data_cursor", "data_size", "checksum")
+    __slots__ = ("checksum", "data_cursor", "data_size", "hash")
 
     def __init__(self, size: int, checksum: bytes) -> None:
         """Initializes the Decoder.
@@ -298,12 +311,54 @@ class Decoder:
         """
         if self.data_size > -1 and self.data_cursor + len(data) > self.data_size:
             raise ValueError("Data overflow beyond declared size")
-        
-        cursor = self.data_cursor
-        decoded = bytes((b - (21 + (cursor + i) % 6)) & 0xFF for i, b in enumerate(data))
+
+        ba = bytearray(data)
+        cursor_offset = self.data_cursor % 6
+        for phase in range(6):
+            eff_phase = (phase + cursor_offset) % 6
+            ba[phase::6] = ba[phase::6].translate(_TRANS_DEC[eff_phase])
+        decoded = bytes(ba)
         self.hash.update(decoded)
         self.data_cursor += len(data)
         return decoded
+
+
+def encode_bytes(data: str) -> bytes:
+    """Encodes cleartext string into signed DGDATA bytes in memory.
+
+    Args:
+        data (str): Input string content.
+
+    Returns:
+        bytes: Encoded DGDATA bytes.
+    """
+    data_bytes = data.encode()
+    encoder = Encoder(len(data_bytes))
+    encoded_payload = encoder.digest(data_bytes)
+    checksum = f"{encoder.hash.digest:0{CHECKSUM_SIZE}x}".encode()
+    return HEADER_MAGIC + checksum + encoded_payload
+
+
+def decode_bytes(raw_bytes: bytes) -> str:
+    """Decodes in-memory DGDATA bytes and verifies checksum.
+
+    Args:
+        raw_bytes (bytes): Source DGDATA bytes.
+
+    Returns:
+        str: Decoded cleartext string.
+    """
+    if len(raw_bytes) < HEADER_SIZE or raw_bytes[:6] != HEADER_MAGIC:
+        raise DGDataDecodeError("Invalid file header")
+
+    decoder = Decoder(-1, raw_bytes[6:HEADER_SIZE])
+    decoded = decoder.digest(raw_bytes[HEADER_SIZE:])
+
+    calculated = f"{decoder.hash.digest:0{CHECKSUM_SIZE}x}".encode()
+    if calculated != decoder.checksum:
+        raise DGDataDecodeError("Checksum verification failed")
+
+    return decoded.decode()
 
 
 def encode_to_file(data: str, file_path: str) -> None:
@@ -315,15 +370,15 @@ def encode_to_file(data: str, file_path: str) -> None:
     """
     data_bytes = data.encode()
     encoder = Encoder(len(data_bytes))
-    
+
     header = bytearray(HEADER_SIZE)
     header[:6] = HEADER_MAGIC
-    
+
     with open(file_path, "wb") as f:
         f.write(header)
         encoded = encoder.digest(data_bytes)
         f.write(encoded)
-        
+
         checksum = f"{encoder.hash.digest:0{CHECKSUM_SIZE}x}".encode()
 
         f.seek(6)
@@ -344,15 +399,24 @@ def decode_from_file(filename: str) -> str:
         if len(header) < HEADER_SIZE or header[:6] != HEADER_MAGIC:
             raise DGDataDecodeError("Invalid file header")
         data = f.read()
-        
+
     decoder = Decoder(-1, header[6:])
     decoded = decoder.digest(data)
-    
+
     calculated = f"{decoder.hash.digest:0{CHECKSUM_SIZE}x}".encode()
     if calculated != decoder.checksum:
         raise DGDataDecodeError("Checksum verification failed")
-        
+
     return decoded.decode()
 
 
-__all__ = ["decode_from_file", "encode_to_file"]
+__all__ = [
+    "DGDataDecodeError",
+    "DGDataHash",
+    "Decoder",
+    "Encoder",
+    "decode_bytes",
+    "decode_from_file",
+    "encode_bytes",
+    "encode_to_file",
+]

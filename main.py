@@ -1,6 +1,8 @@
 import sys
+
 from lib.menu import run_app
-from lib.utils.logger import setup_logger, logger
+from lib.ui.ui import clear_screen
+from lib.utils.logger import logger, setup_logger
 
 
 def main() -> None:
@@ -29,14 +31,13 @@ def main() -> None:
             from lib.utils.setup import run_setup
             run_setup()
         except (KeyboardInterrupt, CancelError):
-            import subprocess
-            subprocess.run("cls", shell=True)
+            clear_screen()
             logger.info("SAS:ZA4Tool setup terminated by user.")
             sys.exit(0)
 
     if config.check_updates:
         try:
-            from lib.utils.updates import check_for_updates, VERSION
+            from lib.utils.updates import VERSION, check_for_updates
             has_update, latest = check_for_updates()
             if has_update:
                 print(f"\n[INFO] A new version of SAS:ZA4Tool is available! (Current: {VERSION}, Latest: {latest})")
@@ -44,17 +45,16 @@ def main() -> None:
                     input("Press Enter to continue...")
                 except KeyboardInterrupt:
                     pass
-        except Exception as e:
+        except (OSError, ValueError) as e:
             logger.error(f"Update check failed: {e}")
 
     try:
         run_app()
     except (KeyboardInterrupt, CancelError):
-        import subprocess
-        subprocess.run("cls", shell=True)
+        clear_screen()
         logger.info("SAS:ZA4Tool terminated by user.")
         sys.exit(0)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.critical(f"Unhandled crash: {e}", exc_info=True)
         print(f"\n[CRITICAL ERROR] The application crashed: {e}")
         print("If logging is enabled in settings, details have been written to sas_za4tool.log.")

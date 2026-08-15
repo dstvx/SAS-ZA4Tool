@@ -1,15 +1,15 @@
 from .editor import (
     Editor,
-    SaveError,
+    GlobalProxy,
     ProfileNotFoundError,
     ProfileProxy,
-    GlobalProxy,
+    SaveError,
 )
 
 __all__ = [
     "Editor",
-    "SaveError",
+    "GlobalProxy",
     "ProfileNotFoundError",
     "ProfileProxy",
-    "GlobalProxy",
+    "SaveError",
 ]

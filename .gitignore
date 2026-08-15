@@ -1,19 +1,23 @@
 __pycache__/
 *.pyc
-.venv
+.venv/
 .env
-.gitignore
 
 exports/
 backups/
-tests/
 
 Profile.save
 sas_za4tool.log
 config.toml
+*.png
 
-# Nuitka build outputs
+# Nuitka & PyInstaller build outputs
 SASZA4Tool.exe
+SASZA4Tool
+SASZA4Tool-linux*
+*.bin
 *.build/
 *.dist/
 *.onefile-build/
+build/
+dist/

@@ -1,14 +1,31 @@
 import json
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Final, Mapping
+from typing import Any, Final
+
 from lib.config import config
-from lib.ui.ui import draw_menu as _draw_menu, get_key, prompt_int, prompt_str, prompt_confirm, get_option_description
-from lib.exceptions import CancelError
+from lib.exceptions import (
+    CancelError,
+    ProfileNotFoundError,
+    SAS_ZA4ToolError,
+    SaveError,
+)
 from lib.save.editor import Editor
+from lib.ui.ui import (
+    draw_menu as _draw_menu,
+)
+from lib.ui.ui import (
+    get_key,
+    get_option_description,
+    launch_game,
+    prompt_confirm,
+    prompt_int,
+    prompt_str,
+)
 from lib.utils.logger import logger
 
 
-def draw_menu(title: str, options: List[str], selected_idx: int, message: str = "", breadcrumb: str = "") -> None:
+def draw_menu(title: str, options: list[str], selected_idx: int, message: str = "", breadcrumb: str = "") -> None:
     """Draws a menu screen wrapper customized for profile editor submenus.
 
     Args:
@@ -24,7 +41,7 @@ def draw_menu(title: str, options: List[str], selected_idx: int, message: str = 
     _draw_menu(title, options, selected_idx, message, breadcrumb)
 
 
-def build_weapon_name_map(items_data: Dict[str, Any]) -> Mapping[int, str]:
+def build_weapon_name_map(items_data: dict[str, Any]) -> Mapping[int, str]:
     """Generates a fast lookup dictionary mapping weapon IDs to human-readable names.
 
     Args:
@@ -33,15 +50,15 @@ def build_weapon_name_map(items_data: Dict[str, Any]) -> Mapping[int, str]:
     Returns:
         Mapping[int, str]: Dictionary mapping weapon ID integer to descriptive name.
     """
-    name_map: Dict[int, str] = {}
-    for subcat, variants in items_data.get("weapons", {}).items():
+    name_map: dict[int, str] = {}
+    for variants in items_data.get("weapons", {}).values():
         for variant, items in variants.items():
             for item in items:
                 name_map[item["ID"]] = f"{item['Name']} ({variant.capitalize()})"
     return name_map
 
 
-def build_armour_name_map(items_data: Dict[str, Any]) -> Mapping[int, str]:
+def build_armour_name_map(items_data: dict[str, Any]) -> Mapping[int, str]:
     """Generates a fast lookup dictionary mapping armour/equipment IDs to human-readable names.
 
     Args:
@@ -50,12 +67,13 @@ def build_armour_name_map(items_data: Dict[str, Any]) -> Mapping[int, str]:
     Returns:
         Mapping[int, str]: Dictionary mapping armour ID integer to descriptive name.
     """
-    name_map: Dict[int, str] = {}
-    for subcat, variants in items_data.get("armour", {}).items():
+    name_map: dict[int, str] = {}
+    for variants in items_data.get("armour", {}).values():
         for variant, items in variants.items():
             for item in items:
                 name_map[item["ID"]] = f"{item['Name']} ({variant.capitalize()})"
     return name_map
+
 
 
 def format_display_name(raw_name: str) -> str:
@@ -67,7 +85,7 @@ def format_display_name(raw_name: str) -> str:
     Returns:
         str: Formatted clean display name string.
     """
-    mapping: Final[Dict[str, str]] = {
+    mapping: Final[dict[str, str]] = {
         "smg": "SMG",
         "lmgs": "LMGs",
         "assault_rifles": "Assault Rifles",
@@ -79,7 +97,7 @@ def format_display_name(raw_name: str) -> str:
     return mapping.get(raw_name.lower(), raw_name.capitalize().replace("_", " "))
 
 
-def handle_profile_menu(editor: Editor) -> Optional[str]:
+def handle_profile_menu(editor: Editor) -> str | None:
     """Manages selections, navigation loops and edits in the Profile Editor.
 
     Args:
@@ -94,10 +112,10 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
     items_path: Path = Path(__file__).resolve().parent.parent / "data" / "items.json"
     try:
         with open(items_path, "r", encoding="utf-8") as f:
-            items_data: Dict[str, Any] = json.load(f)
+            items_data: dict[str, Any] = json.load(f)
         weapon_names: Mapping[int, str] = build_weapon_name_map(items_data)
         armour_names: Mapping[int, str] = build_armour_name_map(items_data)
-    except Exception as e:
+    except (OSError, json.JSONDecodeError, KeyError, ValueError) as e:
         logger.error(f"Failed to load items database: {e}")
         items_data = {}
         weapon_names = {}
@@ -120,11 +138,11 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
             level: int = p.level
             xp: int = p.xp
             black_box_count: int = len(p.get(["Skills", "AvailableBlackStrongboxes"], []))
-        except Exception as e:
+        except (ProfileNotFoundError, SaveError, KeyError, ValueError, TypeError) as e:
             logger.error(f"Failed to load profile data: {e}")
             return f"Failed to load profile data: {e}"
 
-        options: List[str] = [
+        options: list[str] = [
             "Add Item",
             "Remove Item",
             "Edit Item Stats",
@@ -160,6 +178,8 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
             selected_idx = (selected_idx + 1) % len(options)
         elif key in ("backspace", "esc", "left"):
             return None
+        elif key == "ctrl+x":
+            message = launch_game()
         elif key == "ctrl+i":
             message = get_option_description(options[selected_idx])
         elif key in ("enter", "space", "right") or key.isdigit() or (len(key) == 1 and key.isalpha()):
@@ -175,7 +195,7 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
                     
             try:
                 if idx == 0:
-                    cats: List[str] = ["Weapon", "Equipment", "Cancel"]
+                    cats: list[str] = ["Weapon", "Equipment", "Cancel"]
                     cat_idx: int = 0
                     while True:
                         draw_menu("Select Category to Inject", cats, cat_idx)
@@ -197,8 +217,8 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
                             
                             is_weapon: bool = (c_sel == 0)
                             db_key: str = "weapons" if is_weapon else "armour"
-                            raw_subcats: List[str] = list(items_data.get(db_key, {}).keys())
-                            subcats: List[str] = [format_display_name(s) for s in raw_subcats] + ["Cancel"]
+                            raw_subcats: list[str] = list(items_data.get(db_key, {}).keys())
+                            subcats: list[str] = [format_display_name(s) for s in raw_subcats] + ["Cancel"]
                             
                             sub_idx: int = 0
                             while True:
@@ -220,8 +240,8 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
                                         break
                                         
                                     subcat_name: str = raw_subcats[s_sel]
-                                    variants: List[str] = [format_display_name(v) for v in items_data.get(db_key, {}).get(subcat_name, {}).keys()] + ["Cancel"]
-                                    raw_variants: List[str] = list(items_data.get(db_key, {}).get(subcat_name, {}).keys())
+                                    variants: list[str] = [format_display_name(v) for v in items_data.get(db_key, {}).get(subcat_name, {})] + ["Cancel"]
+                                    raw_variants: list[str] = list(items_data.get(db_key, {}).get(subcat_name, {}).keys())
                                     
                                     var_idx: int = 0
                                     while True:
@@ -243,13 +263,13 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
                                                 break
                                                 
                                             variant_name: str = raw_variants[v_sel]
-                                            items_list: List[Dict[str, Any]] = items_data.get(db_key, {}).get(subcat_name, {}).get(variant_name, [])
+                                            items_list: list[dict[str, Any]] = items_data.get(db_key, {}).get(subcat_name, {}).get(variant_name, [])
                                             
                                             if not items_list:
                                                 message = "No items found for this subcategory and variant."
                                                 break
                                                 
-                                            item_options: List[str] = [i.get("Name", "Unknown") for i in items_list] + ["Cancel"]
+                                            item_options: list[str] = [i.get("Name", "Unknown") for i in items_list] + ["Cancel"]
                                             it_idx: int = 0
                                             while True:
                                                 draw_menu("Select Item to Inject", item_options, it_idx)
@@ -274,18 +294,27 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
                                                     if it_sel == len(items_list):
                                                         break
                                                         
-                                                    target_item: Dict[str, Any] = items_list[it_sel]
+                                                    target_item: dict[str, Any] = items_list[it_sel]
                                                     item_id: int = target_item["ID"]
                                                     
-                                                    v_map: Final[Dict[str, int]] = {"normal": 0, "red": 1, "black": 2, "factions": 3, "premium": 0}
+                                                    v_map: Final[dict[str, int]] = {"normal": 0, "red": 1, "black": 2, "factions": 3, "premium": 0}
                                                     ver_val: int = v_map.get(variant_name, 0)
+                                                    
+                                                    armour_slot_map: Final[dict[str, int]] = {
+                                                        "helmet": 0,
+                                                        "vest": 1,
+                                                        "gloves": 2,
+                                                        "pants": 3,
+                                                        "boots": 4,
+                                                    }
+                                                    target_slot: int = -1 if is_weapon else armour_slot_map.get(subcat_name.lower(), 0)
                                                     
                                                     grade: int = prompt_int("Enter item grade (0-12)", 0, 12)
                                                     max_augs: int = 4 if is_weapon else 3
                                                     augs: int = prompt_int(f"Enter augment slots count (0-{max_augs})", 0, max_augs)
                                                     bonus: int = prompt_int("Enter bonus stats level (0-10)", 0, 10)
                                                     
-                                                    dest_opts: List[str] = ["Active Inventory (Instant)", "Strongbox Claim Queue", "Cancel"]
+                                                    dest_opts: list[str] = ["Active Inventory (Instant)", "Strongbox Claim Queue", "Cancel"]
                                                     dest_sel: int = 0
                                                     dest_done: bool = False
                                                     while not dest_done:
@@ -306,11 +335,11 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
                                                             if t_sel == 2:
                                                                 break
                                                             elif t_sel == 0:
-                                                                p.inject_to_inventory(is_weapon, item_id, ver_val, grade, -1, augs, bonus)
+                                                                p.inject_to_inventory(is_weapon, item_id, ver_val, grade, target_slot, augs, bonus)
                                                                 message = f"Injected {target_item.get('Name')} directly into active inventory."
                                                                 dest_done = True
                                                             elif t_sel == 1:
-                                                                p.inject_item(is_weapon, item_id, ver_val, grade, -1, augs, bonus)
+                                                                p.inject_item(is_weapon, item_id, ver_val, grade, target_slot, augs, bonus)
                                                                 message = f"Injected {target_item.get('Name')} into Claimed Strongbox queue."
                                                                 dest_done = True
                                                     break
@@ -338,7 +367,7 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
                             category_key: str = cats[c_sel]
                             it_idx = 0
                             while True:
-                                p_items: List[Dict[str, Any]] = p.get(category_key, [])
+                                p_items: list[dict[str, Any]] = p.get(category_key, [])
                                 if not p_items:
                                     message = f"No items found in {category_key} list."
                                     break
@@ -380,7 +409,7 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
                                         message = "Item removed successfully."
                                     break
                 elif idx == 2:
-                    sources: List[str] = ["Active Inventory", "Strongbox Claim Queue", "Cancel"]
+                    sources: list[str] = ["Active Inventory", "Strongbox Claim Queue", "Cancel"]
                     src_idx: int = 0
                     while True:
                         draw_menu("Select Item Source to Edit", sources, src_idx)
@@ -473,7 +502,7 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
                             elif s_sel == 1:
                                 it_idx = 0
                                 while True:
-                                    claimed_items: List[Dict[str, Any]] = p.get_claimed_strongboxes()
+                                    claimed_items: list[dict[str, Any]] = p.get_claimed_strongboxes()
                                     if not claimed_items:
                                         message = "No items found in Strongbox Claim Queue."
                                         break
@@ -504,7 +533,7 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
                                         if it_sel == len(claimed_items):
                                             break
                                         
-                                        target_q_item: Dict[str, Any] = claimed_items[it_sel]
+                                        target_q_item: dict[str, Any] = claimed_items[it_sel]
                                         grade = prompt_int("Enter new item grade (0-12)", 0, 12)
                                         max_augs = 4 if target_q_item["is_weapon"] else 3
                                         augs = prompt_int(f"Enter new augment slots count (0-{max_augs})", 0, max_augs)
@@ -777,10 +806,10 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
                     p.clear_masteries()
                     message = "All masteries reset to 0."
                 elif idx == 15:
-                    stats: List[str] = ["multi_kills", "multi_deaths", "multi_games_won", "multi_games_lost"]
+                    stats: list[str] = ["multi_kills", "multi_deaths", "multi_games_won", "multi_games_lost"]
                     s_idx: int = 0
                     while True:
-                        stat_options: List[str] = [f"{s} (Current: {p.get_mp_stat(s)})" for s in stats] + ["Cancel"]
+                        stat_options: list[str] = [f"{s} (Current: {p.get_mp_stat(s)})" for s in stats] + ["Cancel"]
                         draw_menu("Select Multiplayer Stat to Modify", stat_options, s_idx)
                         sk = get_key()
                         if sk == "up":
@@ -803,17 +832,17 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
                             message = f"{stat_key} updated to {val_stat}."
                             break
                 elif idx == 16:
-                    turrets: List[Dict[str, Any]] = p.get_available_turrets()
+                    turrets: list[dict[str, Any]] = p.get_available_turrets()
                     if not turrets:
                         message = "No available turrets found in database for current level."
                         continue
                         
                     t_idx: int = 0
                     while True:
-                        raw_save: Dict[str, Any] = editor._load()
-                        current_turrets: List[Dict[str, Any]] = raw_save.get("Inventory", {}).get(profile_key, {}).get("Turrets", [])
-                        current_counts: Dict[int, int] = {t.get("TurretId", 0): t.get("TurretCount", 0) for t in current_turrets}
-                        t_options: List[str] = [f"{t.get('Name')} (ID {t.get('ID')}) - Current: {current_counts.get(t.get('ID', 0), 0)}" for t in turrets] + ["Cancel"]
+                        raw_save: dict[str, Any] = editor._load()
+                        current_turrets: list[dict[str, Any]] = raw_save.get("Inventory", {}).get(profile_key, {}).get("Turrets", [])
+                        current_counts: dict[int, int] = {t.get("TurretId", 0): t.get("TurretCount", 0) for t in current_turrets}
+                        t_options: list[str] = [f"{t.get('Name')} (ID {t.get('ID')}) - Current: {current_counts.get(t.get('ID', 0), 0)}" for t in turrets] + ["Cancel"]
                         
                         draw_menu("Select Sentry Turret Type", t_options, t_idx)
                         tk = get_key()
@@ -842,7 +871,7 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
                             p.set_turret_count(turret_id, val_t)
                             message = f"{turrets[target_t].get('Name')} quantity updated to {val_t}."
                 elif idx == 17:
-                    actions: List[str] = ["Set Black Boxes count (overwrites)", "Add Black Boxes count (appends)", "Cancel"]
+                    actions: list[str] = ["Set Black Boxes count (overwrites)", "Add Black Boxes count (appends)", "Cancel"]
                     act_idx: int = 0
                     while True:
                         draw_menu("Manage Black Boxes", actions, act_idx)
@@ -878,6 +907,7 @@ def handle_profile_menu(editor: Editor) -> Optional[str]:
                     return None
             except CancelError:
                 message = "Action cancelled."
-            except Exception as e:
+            except (SAS_ZA4ToolError, OSError, ValueError, KeyError, IndexError, TypeError) as e:
                 logger.error(f"Profile option failed: {e}")
                 message = f"Error: {e}"
+

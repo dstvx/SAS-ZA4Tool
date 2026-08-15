@@ -1,11 +1,14 @@
-from typing import Tuple, Final
-import urllib.request
 import json
+import urllib.error
+import urllib.request
+from typing import Final
 
-VERSION: Final[str] = "1.0.2"
+from lib.utils.logger import logger
+
+VERSION: Final[str] = "1.0.3"
 
 
-def check_for_updates() -> Tuple[bool, str]:
+def check_for_updates() -> tuple[bool, str]:
     """Checks if a newer version of the tool is available.
 
     Returns:
@@ -16,16 +19,17 @@ def check_for_updates() -> Tuple[bool, str]:
     try:
         req = urllib.request.Request(
             url,
-            headers={'User-Agent': 'Mozilla/5.0'}
+            headers={"User-Agent": "Mozilla/5.0"}
         )
         with urllib.request.urlopen(req, timeout=3) as response:
-            data = json.loads(response.read().decode('utf-8'))
+            data = json.loads(response.read().decode("utf-8"))
             latest_version = data.get("tag_name", "").strip().lstrip("v")
             if latest_version:
                 current_parts = [int(x) for x in VERSION.split(".")]
                 latest_parts = [int(x) for x in latest_version.split(".")]
                 if latest_parts > current_parts:
                     return True, latest_version
-    except Exception:
-        pass
+    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError, ValueError) as e:
+        logger.debug(f"Update check skipped or failed: {e}")
     return False, VERSION
+
