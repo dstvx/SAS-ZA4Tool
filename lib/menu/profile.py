@@ -300,15 +300,6 @@ def handle_profile_menu(editor: Editor) -> str | None:
                                                     v_map: Final[dict[str, int]] = {"normal": 0, "red": 1, "black": 2, "factions": 3, "premium": 0}
                                                     ver_val: int = v_map.get(variant_name, 0)
                                                     
-                                                    armour_slot_map: Final[dict[str, int]] = {
-                                                        "helmet": 0,
-                                                        "vest": 1,
-                                                        "gloves": 2,
-                                                        "pants": 3,
-                                                        "boots": 4,
-                                                    }
-                                                    target_slot: int = -1 if is_weapon else armour_slot_map.get(subcat_name.lower(), 0)
-                                                    
                                                     grade: int = prompt_int("Enter item grade (0-12)", 0, 12)
                                                     max_augs: int = 4 if is_weapon else 3
                                                     augs: int = prompt_int(f"Enter augment slots count (0-{max_augs})", 0, max_augs)
@@ -335,11 +326,11 @@ def handle_profile_menu(editor: Editor) -> str | None:
                                                             if t_sel == 2:
                                                                 break
                                                             elif t_sel == 0:
-                                                                p.inject_to_inventory(is_weapon, item_id, ver_val, grade, target_slot, augs, bonus)
+                                                                p.inject_to_inventory(is_weapon, item_id, ver_val, grade, -1, augs, bonus)
                                                                 message = f"Injected {target_item.get('Name')} directly into active inventory."
                                                                 dest_done = True
                                                             elif t_sel == 1:
-                                                                p.inject_item(is_weapon, item_id, ver_val, grade, target_slot, augs, bonus)
+                                                                p.inject_item(is_weapon, item_id, ver_val, grade, -1, augs, bonus)
                                                                 message = f"Injected {target_item.get('Name')} into Claimed Strongbox queue."
                                                                 dest_done = True
                                                     break

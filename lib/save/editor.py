@@ -265,17 +265,16 @@ class ProfileProxy:
                 "BonusStatsLevel": bonus,
             }
         else:
-            equip_type = slot if slot >= 0 else self._editor._get_armour_slot(item_id)
             item_dict = {
                 "ID": item_id,
                 "EquipVersion": version,
                 "Grade": grade,
-                "EquippedSlot": equip_type,
+                "EquippedSlot": slot if slot >= 0 else -1,
                 "AugmentSlots": augs,
-                "InventoryIndex": equip_type,
+                "InventoryIndex": 0,
                 "Seen": True,
                 "BonusStatsLevel": bonus,
-                "Equipped": False,
+                "Equipped": (slot >= 0),
             }
 
         data = self._editor._load()
@@ -343,17 +342,16 @@ class ProfileProxy:
                 "BonusStatsLevel": bonus,
             }
         else:
-            equip_type = slot if slot >= 0 else self._editor._get_armour_slot(item_id)
             item_dict = {
                 "ID": item_id,
                 "EquipVersion": version,
                 "Grade": grade,
-                "EquippedSlot": equip_type,
+                "EquippedSlot": slot if slot >= 0 else -1,
                 "AugmentSlots": augs,
                 "InventoryIndex": len(item_list),
                 "Seen": True,
                 "BonusStatsLevel": bonus,
-                "Equipped": False,
+                "Equipped": (slot >= 0),
             }
 
         item_list.append(item_dict)

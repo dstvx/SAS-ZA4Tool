@@ -164,30 +164,30 @@ class TestSaveEditorFeatures(unittest.TestCase):
         self.assertEqual(weapons[1]["BonusStatsLevel"], 5)
         self.assertEqual(weapons[1]["EquippedSlot"], -1)
 
-        # Inject equipment (Vest - ID 101, slot 1)
-        p0.inject_to_inventory(is_weapon=False, item_id=101, version=0, grade=8, slot=1, augs=3, bonus=6)
+        # Inject equipment (Vest - ID 101, unequipped)
+        p0.inject_to_inventory(is_weapon=False, item_id=101, version=0, grade=8, slot=-1, augs=3, bonus=6)
         equipment = p0.get("Equipment", [])
         self.assertGreaterEqual(len(equipment), 1)
         last_equip = equipment[-1]
         self.assertEqual(last_equip["ID"], 101)
-        self.assertEqual(last_equip["EquippedSlot"], 1)
+        self.assertEqual(last_equip["EquippedSlot"], -1)
         self.assertEqual(last_equip["AugmentSlots"], 3)
         self.assertEqual(last_equip["BonusStatsLevel"], 6)
         self.assertFalse(last_equip["Equipped"])
 
     def test_inject_equipment_to_claimed_strongbox(self) -> None:
-        """Tests injecting equipment to claimed strongbox with auto-resolved slot."""
+        """Tests injecting equipment to claimed strongbox."""
         editor = Editor(self.temp_save_path)
         p0 = editor.profile("Profile0")
 
-        # Inject Boots (ID 214 -> boots = slot 4)
-        p0.inject_item(is_weapon=False, item_id=214, version=1, grade=10, slot=4, augs=3, bonus=7)
+        # Inject Boots (ID 214 -> unequipped in claim queue)
+        p0.inject_item(is_weapon=False, item_id=214, version=1, grade=10, slot=-1, augs=3, bonus=7)
         claimed = p0.get_claimed_strongboxes()
         newest = claimed[-1]
         self.assertFalse(newest["is_weapon"])
         self.assertEqual(newest["data"]["ID"], 214)
-        self.assertEqual(newest["data"]["EquippedSlot"], 4)
-        self.assertEqual(newest["data"]["InventoryIndex"], 4)
+        self.assertEqual(newest["data"]["EquippedSlot"], -1)
+        self.assertEqual(newest["data"]["InventoryIndex"], 0)
         self.assertEqual(newest["data"]["AugmentSlots"], 3)
         self.assertEqual(newest["data"]["BonusStatsLevel"], 7)
         self.assertFalse(newest["data"]["Equipped"])
