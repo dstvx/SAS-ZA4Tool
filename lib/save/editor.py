@@ -261,8 +261,12 @@ class ProfileProxy:
                 "EquippedSlot": slot if slot >= 0 else -1,
                 "AugmentSlots": augs,
                 "InventoryIndex": 0,
-                "Seen": True,
+                "Seen": False,
                 "BonusStatsLevel": bonus,
+                "ContainsKey": False,
+                "ContainsAugmentCore": False,
+                "BlackStrongboxSeed": 0,
+                "UseDefaultOpenLogic": True,
             }
         else:
             item_dict = {
@@ -272,9 +276,13 @@ class ProfileProxy:
                 "EquippedSlot": slot if slot >= 0 else -1,
                 "AugmentSlots": augs,
                 "InventoryIndex": 0,
-                "Seen": True,
+                "Seen": False,
                 "BonusStatsLevel": bonus,
                 "Equipped": (slot >= 0),
+                "ContainsKey": False,
+                "ContainsAugmentCore": False,
+                "BlackStrongboxSeed": 0,
+                "UseDefaultOpenLogic": True,
             }
 
         data = self._editor._load()

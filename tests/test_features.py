@@ -191,6 +191,9 @@ class TestSaveEditorFeatures(unittest.TestCase):
         self.assertEqual(newest["data"]["AugmentSlots"], 3)
         self.assertEqual(newest["data"]["BonusStatsLevel"], 7)
         self.assertFalse(newest["data"]["Equipped"])
+        self.assertFalse(newest["data"]["Seen"])
+        self.assertFalse(newest["data"]["ContainsKey"])
+        self.assertTrue(newest["data"]["UseDefaultOpenLogic"])
 
     def test_claimed_strongbox_stats_and_transport(self) -> None:
         """Tests editing stats and transporting items inside the claimed strongbox queue."""
