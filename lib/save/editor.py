@@ -263,10 +263,6 @@ class ProfileProxy:
                 "InventoryIndex": 0,
                 "Seen": True,
                 "BonusStatsLevel": bonus,
-                "ContainsKey": False,
-                "ContainsAugmentCore": False,
-                "BlackStrongboxSeed": 0,
-                "UseDefaultOpenLogic": True,
             }
         else:
             equip_type = slot if slot >= 0 else self._editor._get_armour_slot(item_id)
@@ -280,10 +276,6 @@ class ProfileProxy:
                 "Seen": True,
                 "BonusStatsLevel": bonus,
                 "Equipped": False,
-                "ContainsKey": False,
-                "ContainsAugmentCore": False,
-                "BlackStrongboxSeed": 0,
-                "UseDefaultOpenLogic": True,
             }
 
         data = self._editor._load()
@@ -349,10 +341,6 @@ class ProfileProxy:
                 "InventoryIndex": len(item_list),
                 "Seen": True,
                 "BonusStatsLevel": bonus,
-                "ContainsKey": False,
-                "ContainsAugmentCore": False,
-                "BlackStrongboxSeed": 0,
-                "UseDefaultOpenLogic": True,
             }
         else:
             equip_type = slot if slot >= 0 else self._editor._get_armour_slot(item_id)
@@ -366,10 +354,6 @@ class ProfileProxy:
                 "Seen": True,
                 "BonusStatsLevel": bonus,
                 "Equipped": False,
-                "ContainsKey": False,
-                "ContainsAugmentCore": False,
-                "BlackStrongboxSeed": 0,
-                "UseDefaultOpenLogic": True,
             }
 
         item_list.append(item_dict)
