@@ -5,7 +5,7 @@ from typing import Final
 
 from lib.utils.logger import logger
 
-VERSION: Final[str] = "1.0.3"
+VERSION: Final[str] = "1.0.4"
 
 
 def check_for_updates() -> tuple[bool, str]:
