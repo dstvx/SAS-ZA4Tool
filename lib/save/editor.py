@@ -351,16 +351,17 @@ class ProfileProxy:
                 "BonusStatsLevel": bonus,
             }
         else:
+            equip_type = slot if slot >= 0 else self._editor._get_armour_slot(item_id)
             item_dict = {
                 "ID": item_id,
                 "EquipVersion": version,
                 "Grade": grade,
-                "EquippedSlot": slot if slot >= 0 else -1,
+                "EquippedSlot": equip_type,
                 "AugmentSlots": augs,
                 "InventoryIndex": len(item_list),
                 "Seen": True,
                 "BonusStatsLevel": bonus,
-                "Equipped": (slot >= 0),
+                "Equipped": False,
             }
 
         item_list.append(item_dict)

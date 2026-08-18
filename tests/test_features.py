@@ -170,7 +170,7 @@ class TestSaveEditorFeatures(unittest.TestCase):
         self.assertGreaterEqual(len(equipment), 1)
         last_equip = equipment[-1]
         self.assertEqual(last_equip["ID"], 101)
-        self.assertEqual(last_equip["EquippedSlot"], -1)
+        self.assertEqual(last_equip["EquippedSlot"], 2)
         self.assertEqual(last_equip["AugmentSlots"], 3)
         self.assertEqual(last_equip["BonusStatsLevel"], 6)
         self.assertFalse(last_equip["Equipped"])
