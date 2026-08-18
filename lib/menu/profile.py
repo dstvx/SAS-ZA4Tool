@@ -395,78 +395,16 @@ def handle_profile_menu(editor: Editor) -> str | None:
                                                         10,
                                                     )
 
-                                                    dest_opts: list[str] = [
-                                                        "Active Inventory (Instant)",
-                                                        "Strongbox Claim Queue",
-                                                        "Cancel",
-                                                    ]
-                                                    dest_sel: int = 0
-                                                    dest_done: bool = False
-                                                    while not dest_done:
-                                                        draw_menu(
-                                                            "Select Injection Destination",
-                                                            dest_opts,
-                                                            dest_sel,
-                                                        )
-                                                        dk: str = get_key()
-                                                        if dk == "up":
-                                                            dest_sel = (
-                                                                dest_sel - 1
-                                                            ) % len(dest_opts)
-                                                        elif dk == "down":
-                                                            dest_sel = (
-                                                                dest_sel + 1
-                                                            ) % len(dest_opts)
-                                                        elif dk in (
-                                                            "backspace",
-                                                            "esc",
-                                                            "left",
-                                                        ):
-                                                            break
-                                                        elif (
-                                                            dk
-                                                            in (
-                                                                "enter",
-                                                                "space",
-                                                                "right",
-                                                            )
-                                                            or dk.isdigit()
-                                                        ):
-                                                            t_sel: int = dest_sel
-                                                            if dk.isdigit():
-                                                                d_idx = int(dk) - 1
-                                                                if (
-                                                                    0
-                                                                    <= d_idx
-                                                                    < len(dest_opts)
-                                                                ):
-                                                                    t_sel = d_idx
-                                                            if t_sel == 2:
-                                                                break
-                                                            elif t_sel == 0:
-                                                                p.inject_to_inventory(
-                                                                    is_weapon,
-                                                                    item_id,
-                                                                    ver_val,
-                                                                    grade,
-                                                                    -1,
-                                                                    augs,
-                                                                    bonus,
-                                                                )
-                                                                message = f"Injected {target_item.get('Name')} directly into active inventory."
-                                                                dest_done = True
-                                                            elif t_sel == 1:
-                                                                p.inject_item(
-                                                                    is_weapon,
-                                                                    item_id,
-                                                                    ver_val,
-                                                                    grade,
-                                                                    -1,
-                                                                    augs,
-                                                                    bonus,
-                                                                )
-                                                                message = f"Injected {target_item.get('Name')} into Claimed Strongbox queue."
-                                                                dest_done = True
+                                                    p.inject_item(
+                                                        is_weapon,
+                                                        item_id,
+                                                        ver_val,
+                                                        grade,
+                                                        -1,
+                                                        augs,
+                                                        bonus,
+                                                    )
+                                                    message = f"Injected {target_item.get('Name')} into Claimed Strongbox queue."
                                                     break
                 elif idx == 1:
                     cats = ["Weapons", "Equipment", "Cancel"]

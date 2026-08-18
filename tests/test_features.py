@@ -142,36 +142,24 @@ class TestSaveEditorFeatures(unittest.TestCase):
         self.assertEqual(updated_weapon["AugmentSlots"], 4)
         self.assertEqual(updated_weapon["BonusStatsLevel"], 8)
 
-    def test_inject_to_inventory(self) -> None:
-        """Tests injecting an item directly to the active profile's inventory."""
+    def test_inject_item_weapon_and_equipment_claimed(self) -> None:
+        """Tests injecting weapons and equipment to the native claimed strongbox queue."""
         editor = Editor(self.temp_save_path)
         p0 = editor.profile("Profile0")
 
-        self.assertEqual(len(p0.get("Weapons", [])), 1)
-        p0.inject_to_inventory(
-            is_weapon=True, item_id=202, version=0, grade=10, slot=-1, augs=4, bonus=5
+        initial_count = len(p0.get_claimed_strongboxes())
+        p0.inject_item(
+            is_weapon=True, item_id=202, version=2, grade=12, slot=-1, augs=4, bonus=10
         )
-
-        weapons = p0.get("Weapons", [])
-        self.assertEqual(len(weapons), 2)
-        self.assertEqual(weapons[1]["ID"], 202)
-        self.assertEqual(weapons[1]["Grade"], 10)
-        self.assertEqual(weapons[1]["AugmentSlots"], 4)
-        self.assertEqual(weapons[1]["BonusStatsLevel"], 5)
-        self.assertEqual(weapons[1]["EquippedSlot"], -1)
-
-        # Inject equipment (Vest - ID 101, unequipped)
-        p0.inject_to_inventory(
-            is_weapon=False, item_id=101, version=0, grade=8, slot=-1, augs=3, bonus=6
-        )
-        equipment = p0.get("Equipment", [])
-        self.assertGreaterEqual(len(equipment), 1)
-        last_equip = equipment[-1]
-        self.assertEqual(last_equip["ID"], 101)
-        self.assertEqual(last_equip["EquippedSlot"], -1)
-        self.assertEqual(last_equip["AugmentSlots"], 3)
-        self.assertEqual(last_equip["BonusStatsLevel"], 6)
-        self.assertFalse(last_equip["Equipped"])
+        claimed = p0.get_claimed_strongboxes()
+        self.assertEqual(len(claimed), initial_count + 1)
+        newest = claimed[-1]
+        self.assertEqual(newest["data"]["ID"], 202)
+        self.assertEqual(newest["data"]["Grade"], 12)
+        self.assertEqual(newest["data"]["AugmentSlots"], 4)
+        self.assertEqual(newest["data"]["BonusStatsLevel"], 10)
+        self.assertEqual(newest["data"]["EquippedSlot"], -1)
+        self.assertTrue(newest["data"]["UseDefaultOpenLogic"])
 
     def test_inject_equipment_to_claimed_strongbox(self) -> None:
         """Tests injecting equipment to claimed strongbox."""
