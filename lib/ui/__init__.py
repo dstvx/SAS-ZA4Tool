@@ -29,4 +29,3 @@ __all__ = [
     "resize_console",
     "update_console_title",
 ]
-

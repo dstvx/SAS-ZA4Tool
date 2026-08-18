@@ -34,7 +34,7 @@ def _serialize_value(value: Any) -> str:
 
 class Config:
     """Stores, loads, and manages configuration parameters in a TOML file."""
-    
+
     DEFAULT_CONFIG: Final[dict[str, Any]] = {
         "steam_id": "",
         "steam_path": "",
@@ -70,12 +70,14 @@ class Config:
             with open(self._filepath, "rb") as f:
                 data: dict[str, Any] = tomllib.load(f)
             flat_data: dict[str, Any] = {}
+
             def flatten(d: dict[str, Any]) -> None:
                 for k, v in d.items():
                     if isinstance(v, dict):
                         flatten(v)
                     else:
                         flat_data[k] = v
+
             flatten(data)
             logger.info(f"Loaded config from {self._filepath}")
             return {**self.DEFAULT_CONFIG, **flat_data}
@@ -89,14 +91,22 @@ class Config:
         sections: dict[str, list[str]] = {
             "steam": ["steam_id", "steam_path"],
             "game": ["save_path", "game_path"],
-            "tool": ["active_profiles", "current_profile", "setup_done", "logs_enabled", "check_updates"]
+            "tool": [
+                "active_profiles",
+                "current_profile",
+                "setup_done",
+                "logs_enabled",
+                "check_updates",
+            ],
         }
-        
-        known_keys: set[str] = set(sections["steam"] + sections["game"] + sections["tool"])
+
+        known_keys: set[str] = set(
+            sections["steam"] + sections["game"] + sections["tool"]
+        )
         for k in self._data:
             if k not in known_keys:
                 sections["tool"].append(k)
-                
+
         lines: list[str] = []
         for section, keys in sections.items():
             lines.append(f"[{section}]")
@@ -104,7 +114,7 @@ class Config:
                 if k in self._data:
                     lines.append(f"{k} = {_serialize_value(self._data[k])}")
             lines.append("")
-            
+
         try:
             with open(self._filepath, "w", encoding="utf-8") as f:
                 f.write("\n".join(lines))
@@ -241,7 +251,9 @@ class Config:
         if not steam_id_str:
             errors.append("Critical: Steam ID ('steam_id') is empty.")
         elif not steam_id_str.isdigit():
-            errors.append(f"Critical: Steam ID ('steam_id') must be a numeric string, got: '{steam_id_str}'")
+            errors.append(
+                f"Critical: Steam ID ('steam_id') must be a numeric string, got: '{steam_id_str}'"
+            )
 
         steam_path_str: str = self._data.get("steam_path", "")
         if steam_path_str:
@@ -252,19 +264,27 @@ class Config:
         current_profile: str = self._data.get("current_profile", "")
         active_profiles: list[str] = self._data.get("active_profiles", [])
         if current_profile and current_profile not in active_profiles:
-            errors.append(f"Warning: Selected profile '{current_profile}' is not in active profiles list: {active_profiles}")
+            errors.append(
+                f"Warning: Selected profile '{current_profile}' is not in active profiles list: {active_profiles}"
+            )
 
         return errors
 
 
 def _get_project_root() -> Path:
     import sys
+
     is_compiled = False
-    if hasattr(sys, "frozen") or getattr(sys, "readcompiled", False) or "__compiled__" in globals():
+    if (
+        hasattr(sys, "frozen")
+        or getattr(sys, "readcompiled", False)
+        or "__compiled__" in globals()
+    ):
         is_compiled = True
     else:
         try:
             import builtins
+
             is_compiled = hasattr(builtins, "__compiled__")
         except ImportError:
             pass

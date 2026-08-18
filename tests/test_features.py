@@ -25,7 +25,7 @@ class TestSaveEditorFeatures(unittest.TestCase):
                     "Skills": {
                         "AvailableBlackKeys": 5,
                         "AvailableEliteAugmentCores": 3,
-                        "AvailableBlackStrongboxes": [99999]
+                        "AvailableBlackStrongboxes": [99999],
                     },
                     "Weapons": [
                         {
@@ -34,7 +34,7 @@ class TestSaveEditorFeatures(unittest.TestCase):
                             "Grade": 2,
                             "AugmentSlots": 2,
                             "BonusStatsLevel": 1,
-                            "EquippedSlot": -1
+                            "EquippedSlot": -1,
                         }
                     ],
                     "Equipment": [],
@@ -47,36 +47,30 @@ class TestSaveEditorFeatures(unittest.TestCase):
                                 "Grade": 4,
                                 "AugmentSlots": 3,
                                 "BonusStatsLevel": 2,
-                                "EquippedSlot": -1
+                                "EquippedSlot": -1,
                             },
                             8,
-                            2
+                            2,
                         ]
-                    }
+                    },
                 },
                 "Profile1": {
                     "Name": "TestChar2",
                     "Money": 200,
                     "Loaded": True,
                     "Weapons": [],
-                    "Equipment": []
-                }
+                    "Equipment": [],
+                },
             },
-            "CollectionArrayWeapon": [
-                {"CollectionUnlocked": False}
-            ],
-            "CollectionArrayArmour": [
-                {"CollectionUnlocked": False}
-            ],
-            "CollectionRewards": {
-                "reward_1": False
-            }
+            "CollectionArrayWeapon": [{"CollectionUnlocked": False}],
+            "CollectionArrayArmour": [{"CollectionUnlocked": False}],
+            "CollectionRewards": {"reward_1": False},
         }
 
         fd, path_str = tempfile.mkstemp(suffix=".save")
         os.close(fd)
         self.temp_save_path = Path(path_str)
-        
+
         json_str = json.dumps(self.initial_data, separators=(",", ":"))
         encode_to_file(json_str, str(self.temp_save_path))
 
@@ -88,7 +82,7 @@ class TestSaveEditorFeatures(unittest.TestCase):
     def test_granular_collections(self) -> None:
         """Tests granular collection unlocking methods."""
         editor = Editor(self.temp_save_path)
-        
+
         editor.globals.set_weapons_collection_state(True)
         raw = json.loads(decode_from_file(str(self.temp_save_path)))
         self.assertTrue(raw["CollectionArrayWeapon"][0]["CollectionUnlocked"])
@@ -106,7 +100,7 @@ class TestSaveEditorFeatures(unittest.TestCase):
         """Tests reading and deleting items from the strongbox claim queue."""
         editor = Editor(self.temp_save_path)
         p0 = editor.profile("Profile0")
-        
+
         claimed = p0.get_claimed_strongboxes()
         self.assertEqual(len(claimed), 1)
         self.assertTrue(claimed[0]["is_weapon"])
@@ -121,12 +115,12 @@ class TestSaveEditorFeatures(unittest.TestCase):
         editor = Editor(self.temp_save_path)
         p0 = editor.profile("Profile0")
         p1 = editor.profile("Profile1")
-        
+
         self.assertEqual(len(p0.get("Weapons", [])), 1)
         self.assertEqual(len(p1.get("Weapons", [])), 0)
 
         p0.transport_item("Weapons", 0, "Profile1")
-        
+
         self.assertEqual(len(p0.get("Weapons", [])), 0)
         self.assertEqual(len(p1.get("Weapons", [])), 1)
         self.assertEqual(p1.get("Weapons", [])[0]["ID"], 101)
@@ -135,14 +129,14 @@ class TestSaveEditorFeatures(unittest.TestCase):
         """Tests editing stats on equipped inventory items."""
         editor = Editor(self.temp_save_path)
         p0 = editor.profile("Profile0")
-        
+
         weapon = p0.get("Weapons", [])[0]
         self.assertEqual(weapon["Grade"], 2)
         self.assertEqual(weapon["AugmentSlots"], 2)
         self.assertEqual(weapon["BonusStatsLevel"], 1)
 
         p0.update_item_stats("Weapons", 0, 10, 4, 8)
-        
+
         updated_weapon = p0.get("Weapons", [])[0]
         self.assertEqual(updated_weapon["Grade"], 10)
         self.assertEqual(updated_weapon["AugmentSlots"], 4)
@@ -152,10 +146,12 @@ class TestSaveEditorFeatures(unittest.TestCase):
         """Tests injecting an item directly to the active profile's inventory."""
         editor = Editor(self.temp_save_path)
         p0 = editor.profile("Profile0")
-        
+
         self.assertEqual(len(p0.get("Weapons", [])), 1)
-        p0.inject_to_inventory(is_weapon=True, item_id=202, version=0, grade=10, slot=-1, augs=4, bonus=5)
-        
+        p0.inject_to_inventory(
+            is_weapon=True, item_id=202, version=0, grade=10, slot=-1, augs=4, bonus=5
+        )
+
         weapons = p0.get("Weapons", [])
         self.assertEqual(len(weapons), 2)
         self.assertEqual(weapons[1]["ID"], 202)
@@ -165,7 +161,9 @@ class TestSaveEditorFeatures(unittest.TestCase):
         self.assertEqual(weapons[1]["EquippedSlot"], -1)
 
         # Inject equipment (Vest - ID 101, unequipped)
-        p0.inject_to_inventory(is_weapon=False, item_id=101, version=0, grade=8, slot=-1, augs=3, bonus=6)
+        p0.inject_to_inventory(
+            is_weapon=False, item_id=101, version=0, grade=8, slot=-1, augs=3, bonus=6
+        )
         equipment = p0.get("Equipment", [])
         self.assertGreaterEqual(len(equipment), 1)
         last_equip = equipment[-1]
@@ -181,7 +179,9 @@ class TestSaveEditorFeatures(unittest.TestCase):
         p0 = editor.profile("Profile0")
 
         # Inject Boots (ID 214 -> unequipped in claim queue)
-        p0.inject_item(is_weapon=False, item_id=214, version=1, grade=10, slot=-1, augs=3, bonus=7)
+        p0.inject_item(
+            is_weapon=False, item_id=214, version=1, grade=10, slot=-1, augs=3, bonus=7
+        )
         claimed = p0.get_claimed_strongboxes()
         newest = claimed[-1]
         self.assertFalse(newest["is_weapon"])
@@ -200,20 +200,20 @@ class TestSaveEditorFeatures(unittest.TestCase):
         editor = Editor(self.temp_save_path)
         p0 = editor.profile("Profile0")
         p1 = editor.profile("Profile1")
-        
+
         claimed_p0 = p0.get_claimed_strongboxes()
         self.assertEqual(len(claimed_p0), 1)
         self.assertEqual(claimed_p0[0]["data"]["Grade"], 4)
-        
+
         p0.update_claimed_strongbox_stats(0, grade=12, augs=4, bonus=10)
         claimed_p0_updated = p0.get_claimed_strongboxes()
         self.assertEqual(claimed_p0_updated[0]["data"]["Grade"], 12)
         self.assertEqual(claimed_p0_updated[0]["data"]["AugmentSlots"], 4)
         self.assertEqual(claimed_p0_updated[0]["data"]["BonusStatsLevel"], 10)
-        
+
         p0.transport_claimed_strongbox(0, "Profile1")
         self.assertEqual(len(p0.get_claimed_strongboxes()), 0)
-        
+
         claimed_p1 = p1.get_claimed_strongboxes()
         self.assertEqual(len(claimed_p1), 1)
         self.assertEqual(claimed_p1[0]["data"]["ID"], 201)
@@ -235,11 +235,11 @@ class TestSaveEditorFeatures(unittest.TestCase):
         from unittest.mock import MagicMock, patch
 
         from lib.utils.updates import check_for_updates
-        
+
         mock_response = MagicMock()
         mock_response.read.return_value = b'{"tag_name": "v9.9.9"}'
         mock_response.__enter__.return_value = mock_response
-        
+
         with patch("urllib.request.urlopen", return_value=mock_response):
             has_update, latest = check_for_updates()
             self.assertTrue(has_update)
@@ -248,7 +248,7 @@ class TestSaveEditorFeatures(unittest.TestCase):
         mock_response_older = MagicMock()
         mock_response_older.read.return_value = b'{"tag_name": "v1.0.1"}'
         mock_response_older.__enter__.return_value = mock_response_older
-        
+
         with patch("urllib.request.urlopen", return_value=mock_response_older):
             has_update, latest = check_for_updates()
             self.assertFalse(has_update)
@@ -260,31 +260,46 @@ class TestSaveEditorFeatures(unittest.TestCase):
         orig_steam_path = config.steam_path
         orig_profile = config.current_profile
         orig_active = config.active_profiles
-        
+
         try:
             config.save_path = ""
             errors = config.validate()
             self.assertTrue(any("Critical: Save path" in e for e in errors))
-            
+
             config.save_path = "C:\\non_existent_save_file.save"
             errors = config.validate()
-            self.assertTrue(any("Critical: Save path does not exist" in e for e in errors))
-            
+            self.assertTrue(
+                any("Critical: Save path does not exist" in e for e in errors)
+            )
+
             config.save_path = str(self.temp_save_path)
             config.steam_id = "abc"
             errors = config.validate()
-            self.assertTrue(any("Critical: Steam ID ('steam_id') must be a numeric string" in e for e in errors))
-            
+            self.assertTrue(
+                any(
+                    "Critical: Steam ID ('steam_id') must be a numeric string" in e
+                    for e in errors
+                )
+            )
+
             config.steam_id = ""
             errors = config.validate()
-            self.assertTrue(any("Critical: Steam ID ('steam_id') is empty" in e for e in errors))
-            
+            self.assertTrue(
+                any("Critical: Steam ID ('steam_id') is empty" in e for e in errors)
+            )
+
             config.steam_id = "12345"
             config.current_profile = "Profile99"
             config.active_profiles = ["Profile0"]
             errors = config.validate()
-            self.assertTrue(any("Warning: Selected profile 'Profile99' is not in active profiles list" in e for e in errors))
-            
+            self.assertTrue(
+                any(
+                    "Warning: Selected profile 'Profile99' is not in active profiles list"
+                    in e
+                    for e in errors
+                )
+            )
+
             config.current_profile = "Profile0"
             config.steam_path = ""
             errors = config.validate()
@@ -324,6 +339,7 @@ class TestSaveEditorFeatures(unittest.TestCase):
     def test_in_memory_crypt(self) -> None:
         """Tests in-memory encoding and decoding without file roundtrips."""
         from lib.crypt import decode_bytes, encode_bytes
+
         sample_text = json.dumps({"test_key": 12345, "name": "SAS4_Hero"})
         encoded = encode_bytes(sample_text)
         self.assertTrue(encoded.startswith(b"DGDATA"))
@@ -333,6 +349,7 @@ class TestSaveEditorFeatures(unittest.TestCase):
     def test_steam_resolver_cross_platform(self) -> None:
         """Tests that Steam resolver does not crash and resolves paths on Linux/Windows."""
         from lib.steam.steam import Resolver, to_account_id
+
         resolver = Resolver()
         resolved = resolver.resolve()
         # Should not raise exception
@@ -346,4 +363,3 @@ class TestSaveEditorFeatures(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

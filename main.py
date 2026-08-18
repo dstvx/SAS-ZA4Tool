@@ -29,6 +29,7 @@ def main() -> None:
     if not config.setup_done:
         try:
             from lib.utils.setup import run_setup
+
             run_setup()
         except (KeyboardInterrupt, CancelError):
             clear_screen()
@@ -38,9 +39,12 @@ def main() -> None:
     if config.check_updates:
         try:
             from lib.utils.updates import VERSION, check_for_updates
+
             has_update, latest = check_for_updates()
             if has_update:
-                print(f"\n[INFO] A new version of SAS:ZA4Tool is available! (Current: {VERSION}, Latest: {latest})")
+                print(
+                    f"\n[INFO] A new version of SAS:ZA4Tool is available! (Current: {VERSION}, Latest: {latest})"
+                )
                 try:
                     input("Press Enter to continue...")
                 except KeyboardInterrupt:
@@ -57,7 +61,9 @@ def main() -> None:
     except Exception as e:  # noqa: BLE001
         logger.critical(f"Unhandled crash: {e}", exc_info=True)
         print(f"\n[CRITICAL ERROR] The application crashed: {e}")
-        print("If logging is enabled in settings, details have been written to sas_za4tool.log.")
+        print(
+            "If logging is enabled in settings, details have been written to sas_za4tool.log."
+        )
         try:
             input("\nPress Enter to exit...")
         except KeyboardInterrupt:

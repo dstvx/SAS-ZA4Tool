@@ -71,6 +71,7 @@ class TestUIKeyNavigation(unittest.TestCase):
         """Tests that launch_game executes without unhandled errors."""
         mock_popen.return_value = MagicMock()
         from lib.ui.ui import launch_game
+
         res = launch_game()
         self.assertIsInstance(res, str)
         self.assertTrue(len(res) > 0)

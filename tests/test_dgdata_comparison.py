@@ -18,14 +18,17 @@ from typing import Any
 
 try:
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+
     HAS_MATPLOTLIB = True
 except ImportError:
     HAS_MATPLOTLIB = False
 
 try:
     import tests.dgdata_numpy as numpy_dgdata
+
     HAS_NUMPY = True
 except ImportError:
     HAS_NUMPY = False
@@ -76,7 +79,9 @@ class TestDGDataComparison(unittest.TestCase):
         """Both implementations must produce bit-for-bit identical encrypted bytes."""
         test_sizes = [0, 1, 6, 7, 13, 64, 512, 4096, 65536, 200000]
         for size in test_sizes:
-            payload = "".join(random.choices(string.ascii_letters + string.digits + " \n\t{}", k=size))
+            payload = "".join(
+                random.choices(string.ascii_letters + string.digits + " \n\t{}", k=size)
+            )
             encoded_pure = pure_dgdata.encode_bytes(payload)
             encoded_numpy = numpy_dgdata.encode_bytes(payload)
             self.assertEqual(
@@ -89,8 +94,10 @@ class TestDGDataComparison(unittest.TestCase):
 
     def test_file_io_parity(self) -> None:
         """Test encode_to_file and decode_from_file parity on disk."""
-        with tempfile.NamedTemporaryFile(suffix=".save", delete=False) as f_pure, \
-             tempfile.NamedTemporaryFile(suffix=".save", delete=False) as f_numpy:
+        with (
+            tempfile.NamedTemporaryFile(suffix=".save", delete=False) as f_pure,
+            tempfile.NamedTemporaryFile(suffix=".save", delete=False) as f_numpy,
+        ):
             path_pure = f_pure.name
             path_numpy = f_numpy.name
 
@@ -148,7 +155,9 @@ class TestDGDataComparison(unittest.TestCase):
         def legacy_decode(raw: bytes) -> str:
             h = pure_dgdata.DGDataHash()
             data_payload = raw[14:]
-            decoded = bytes((b - (21 + i % 6)) & 0xFF for i, b in enumerate(data_payload))
+            decoded = bytes(
+                (b - (21 + i % 6)) & 0xFF for i, b in enumerate(data_payload)
+            )
             h.update(decoded)
             chk = f"{h.digest:08x}".encode()
             if chk != raw[6:14]:
@@ -212,7 +221,7 @@ class TestDGDataComparison(unittest.TestCase):
                 "max": sorted_t[-1],
                 "p95": sorted_t[int(len(sorted_t) * 0.95)],
                 "p99": sorted_t[int(len(sorted_t) * 0.99)],
-                "std": variance ** 0.5,
+                "std": variance**0.5,
             }
 
         legacy_enc_stats = calc_stats(legacy_encode_times)
@@ -225,11 +234,17 @@ class TestDGDataComparison(unittest.TestCase):
         # Plot 4-Panel Visualization if matplotlib is installed
         output_paths = [
             Path(__file__).resolve().parent / "dgdata_benchmark_100_runs.png",
-            Path("/home/admin/.gemini/antigravity-ide/brain/343c27c9-e345-4bd5-a218-faa866d9ed9b/dgdata_benchmark.png"),
+            Path(
+                "/home/admin/.gemini/antigravity-ide/brain/343c27c9-e345-4bd5-a218-faa866d9ed9b/dgdata_benchmark.png"
+            ),
         ]
 
         if HAS_MATPLOTLIB:
-            plt.style.use("seaborn-v0_8-darkgrid" if "seaborn-v0_8-darkgrid" in plt.style.available else "default")
+            plt.style.use(
+                "seaborn-v0_8-darkgrid"
+                if "seaborn-v0_8-darkgrid" in plt.style.available
+                else "default"
+            )
             fig, axs = plt.subplots(2, 2, figsize=(16, 11), dpi=150)
             fig.suptitle(
                 f"DGDATA 3-Way Speed Benchmark: Baseline vs NumPy vs Optimized Architecture\n(100 Iterations on {payload_size_kb:.1f} KB Save File)",
@@ -242,9 +257,31 @@ class TestDGDataComparison(unittest.TestCase):
 
             # Panel 1: Encode Latency Timeline
             ax1 = axs[0, 0]
-            ax1.plot(runs, legacy_encode_times, label=f"Legacy Baseline (Mean: {legacy_enc_stats['mean']:.2f} ms)", color="#e74c3c", alpha=0.7, linestyle="--", linewidth=1.2)
-            ax1.plot(runs, numpy_encode_times, label=f"NumPy Vectorized (Mean: {numpy_enc_stats['mean']:.2f} ms)", color="#3498db", alpha=0.85, linewidth=1.5)
-            ax1.plot(runs, optimized_encode_times, label=f"Optimized DGDATA (Mean: {opt_enc_stats['mean']:.2f} ms)", color="#2ecc71", alpha=0.95, linewidth=2.0)
+            ax1.plot(
+                runs,
+                legacy_encode_times,
+                label=f"Legacy Baseline (Mean: {legacy_enc_stats['mean']:.2f} ms)",
+                color="#e74c3c",
+                alpha=0.7,
+                linestyle="--",
+                linewidth=1.2,
+            )
+            ax1.plot(
+                runs,
+                numpy_encode_times,
+                label=f"NumPy Vectorized (Mean: {numpy_enc_stats['mean']:.2f} ms)",
+                color="#3498db",
+                alpha=0.85,
+                linewidth=1.5,
+            )
+            ax1.plot(
+                runs,
+                optimized_encode_times,
+                label=f"Optimized DGDATA (Mean: {opt_enc_stats['mean']:.2f} ms)",
+                color="#2ecc71",
+                alpha=0.95,
+                linewidth=2.0,
+            )
             ax1.set_title("Encode Latency (100 Runs)", fontweight="bold")
             ax1.set_xlabel("Iteration")
             ax1.set_ylabel("Execution Time (ms)")
@@ -252,9 +289,31 @@ class TestDGDataComparison(unittest.TestCase):
 
             # Panel 2: Decode Latency Timeline
             ax2 = axs[0, 1]
-            ax2.plot(runs, legacy_decode_times, label=f"Legacy Baseline (Mean: {legacy_dec_stats['mean']:.2f} ms)", color="#e67e22", alpha=0.7, linestyle="--", linewidth=1.2)
-            ax2.plot(runs, numpy_decode_times, label=f"NumPy Vectorized (Mean: {numpy_dec_stats['mean']:.2f} ms)", color="#3498db", alpha=0.85, linewidth=1.5)
-            ax2.plot(runs, optimized_decode_times, label=f"Optimized DGDATA (Mean: {opt_dec_stats['mean']:.2f} ms)", color="#2ecc71", alpha=0.95, linewidth=2.0)
+            ax2.plot(
+                runs,
+                legacy_decode_times,
+                label=f"Legacy Baseline (Mean: {legacy_dec_stats['mean']:.2f} ms)",
+                color="#e67e22",
+                alpha=0.7,
+                linestyle="--",
+                linewidth=1.2,
+            )
+            ax2.plot(
+                runs,
+                numpy_decode_times,
+                label=f"NumPy Vectorized (Mean: {numpy_dec_stats['mean']:.2f} ms)",
+                color="#3498db",
+                alpha=0.85,
+                linewidth=1.5,
+            )
+            ax2.plot(
+                runs,
+                optimized_decode_times,
+                label=f"Optimized DGDATA (Mean: {opt_dec_stats['mean']:.2f} ms)",
+                color="#2ecc71",
+                alpha=0.95,
+                linewidth=2.0,
+            )
             ax2.set_title("Decode Latency (100 Runs)", fontweight="bold")
             ax2.set_xlabel("Iteration")
             ax2.set_ylabel("Execution Time (ms)")
@@ -263,12 +322,32 @@ class TestDGDataComparison(unittest.TestCase):
             # Panel 3: Box Plot Distribution
             ax3 = axs[1, 0]
             box_data = [
-                legacy_encode_times, numpy_encode_times, optimized_encode_times,
-                legacy_decode_times, numpy_decode_times, optimized_decode_times,
+                legacy_encode_times,
+                numpy_encode_times,
+                optimized_encode_times,
+                legacy_decode_times,
+                numpy_decode_times,
+                optimized_decode_times,
             ]
-            box_labels = ["Baseline\nEnc", "NumPy\nEnc", "Optimized\nEnc", "Baseline\nDec", "NumPy\nDec", "Optimized\nDec"]
-            box_colors = ["#e74c3c", "#3498db", "#2ecc71", "#e67e22", "#3498db", "#2ecc71"]
-            bplot = ax3.boxplot(box_data, patch_artist=True, tick_labels=box_labels, showmeans=True)
+            box_labels = [
+                "Baseline\nEnc",
+                "NumPy\nEnc",
+                "Optimized\nEnc",
+                "Baseline\nDec",
+                "NumPy\nDec",
+                "Optimized\nDec",
+            ]
+            box_colors = [
+                "#e74c3c",
+                "#3498db",
+                "#2ecc71",
+                "#e67e22",
+                "#3498db",
+                "#2ecc71",
+            ]
+            bplot = ax3.boxplot(
+                box_data, patch_artist=True, tick_labels=box_labels, showmeans=True
+            )
             for patch, color in zip(bplot["boxes"], box_colors):
                 patch.set_facecolor(color)
                 patch.set_alpha(0.75)
@@ -284,9 +363,30 @@ class TestDGDataComparison(unittest.TestCase):
 
             x = [0, 1]
             width = 0.25
-            rects1 = ax4.bar([i - width for i in x], baseline_means, width, label="Legacy Baseline", color="#e74c3c", alpha=0.8)
-            rects2 = ax4.bar(x, numpy_means, width, label="NumPy Vectorized", color="#3498db", alpha=0.85)
-            rects3 = ax4.bar([i + width for i in x], opt_means, width, label="Optimized Architecture", color="#2ecc71", alpha=0.95)
+            rects1 = ax4.bar(
+                [i - width for i in x],
+                baseline_means,
+                width,
+                label="Legacy Baseline",
+                color="#e74c3c",
+                alpha=0.8,
+            )
+            rects2 = ax4.bar(
+                x,
+                numpy_means,
+                width,
+                label="NumPy Vectorized",
+                color="#3498db",
+                alpha=0.85,
+            )
+            rects3 = ax4.bar(
+                [i + width for i in x],
+                opt_means,
+                width,
+                label="Optimized Architecture",
+                color="#2ecc71",
+                alpha=0.95,
+            )
 
             speedup_enc_base = legacy_enc_stats["mean"] / opt_enc_stats["mean"]
             speedup_enc_numpy = numpy_enc_stats["mean"] / opt_enc_stats["mean"]
@@ -301,7 +401,16 @@ class TestDGDataComparison(unittest.TestCase):
 
             for rect in list(rects1) + list(rects2) + list(rects3):
                 h = rect.get_height()
-                ax4.annotate(f"{h:.2f}ms", xy=(rect.get_x() + rect.get_width() / 2, h), xytext=(0, 4), textcoords="offset points", ha="center", va="bottom", fontsize=8, fontweight="bold")
+                ax4.annotate(
+                    f"{h:.2f}ms",
+                    xy=(rect.get_x() + rect.get_width() / 2, h),
+                    xytext=(0, 4),
+                    textcoords="offset points",
+                    ha="center",
+                    va="bottom",
+                    fontsize=8,
+                    fontweight="bold",
+                )
 
             ax4.text(
                 0,

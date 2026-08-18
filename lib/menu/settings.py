@@ -41,9 +41,20 @@ def _copy_to_clipboard(text: str) -> bool:
         except (OSError, subprocess.SubprocessError):
             return False
 
-    for cmd in (["wl-copy"], ["xclip", "-selection", "clipboard"], ["xsel", "--clipboard", "--input"]):
+    for cmd in (
+        ["wl-copy"],
+        ["xclip", "-selection", "clipboard"],
+        ["xsel", "--clipboard", "--input"],
+    ):
         try:
-            subprocess.run(cmd, input=text, text=True, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(
+                cmd,
+                input=text,
+                text=True,
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
             return True
         except (FileNotFoundError, OSError, subprocess.SubprocessError):
             continue
@@ -67,13 +78,15 @@ def handle_item_browser() -> None:
         for subcat, variants in items_data.get(cat, {}).items():
             for variant, items in variants.items():
                 for item in items:
-                    flat_items.append({
-                        "name": item.get("Name", "Unknown"),
-                        "id": item.get("ID", 0),
-                        "type": cat.capitalize()[:-1],
-                        "subcat": subcat.capitalize(),
-                        "variant": variant.capitalize()
-                    })
+                    flat_items.append(
+                        {
+                            "name": item.get("Name", "Unknown"),
+                            "id": item.get("ID", 0),
+                            "type": cat.capitalize()[:-1],
+                            "subcat": subcat.capitalize(),
+                            "variant": variant.capitalize(),
+                        }
+                    )
 
     search_query: str = ""
     current_page: int = 1
@@ -83,8 +96,11 @@ def handle_item_browser() -> None:
 
     while True:
         filtered: list[dict[str, Any]] = [
-            i for i in flat_items
-            if not search_query or search_query.lower() in i["name"].lower() or str(i["id"]) == search_query
+            i
+            for i in flat_items
+            if not search_query
+            or search_query.lower() in i["name"].lower()
+            or str(i["id"]) == search_query
         ]
 
         total_items = len(filtered)
@@ -109,7 +125,9 @@ def handle_item_browser() -> None:
         clear_screen()
         print_header()
 
-        console.print(f"\n  [bold white]Offline Item Database[/] | Search Query: [green]'{search_query or '(All)'}'[/] ({total_items} items found)")
+        console.print(
+            f"\n  [bold white]Offline Item Database[/] | Search Query: [green]'{search_query or '(All)'}'[/] ({total_items} items found)"
+        )
         if message:
             console.print(f"  [bold yellow]Message: {message}[/]")
             message = ""
@@ -139,7 +157,7 @@ def handle_item_browser() -> None:
             "\n".join(list_lines),
             title="[bold green]Matching Items[/]",
             border_style="green",
-            expand=True
+            expand=True,
         )
 
         details_lines: list[str] = []
@@ -161,7 +179,7 @@ def handle_item_browser() -> None:
                 "",
                 "  [dim]No item selected.[/]",
                 "",
-                "  [dim]Press [bold yellow]S[/] to search.[/]"
+                "  [dim]Press [bold yellow]S[/] to search.[/]",
             ]
 
         while len(details_lines) < items_per_page:
@@ -171,13 +189,15 @@ def handle_item_browser() -> None:
             "\n".join(details_lines),
             title="[bold cyan]Selected Item Card[/]",
             border_style="cyan",
-            expand=True
+            expand=True,
         )
 
         grid.add_row(list_panel, details_panel)
         console.print(grid)
 
-        console.print(f"\n  [bold cyan]Page {current_page}/{total_pages}[/]  [dim]|  [Arrows] Navigate/Pages  |  [PgUp/PgDn] Page Jump  |  [S] Search  |  [C/Enter] Copy ID  |  [Esc/Backspace] Back[/]")
+        console.print(
+            f"\n  [bold cyan]Page {current_page}/{total_pages}[/]  [dim]|  [Arrows] Navigate/Pages  |  [PgUp/PgDn] Page Jump  |  [S] Search  |  [C/Enter] Copy ID  |  [Esc/Backspace] Back[/]"
+        )
 
         key: str = get_key()
         if not key:
@@ -209,12 +229,18 @@ def handle_item_browser() -> None:
             break
         elif key == "S":
             try:
-                search_query = prompt_str("Enter item name or ID to search", clear_screen=False).strip()
+                search_query = prompt_str(
+                    "Enter item name or ID to search", clear_screen=False
+                ).strip()
                 current_page = 1
                 selected_idx = 0
             except CancelError:
                 pass
-        elif key in ("C", "enter", "space") and page_items and 0 <= selected_idx < len(page_items):
+        elif (
+            key in ("C", "enter", "space")
+            and page_items
+            and 0 <= selected_idx < len(page_items)
+        ):
             active_item = page_items[selected_idx]
             if _copy_to_clipboard(str(active_item["id"])):
                 message = f"Copied ID {active_item['id']} ({active_item['name']}) to clipboard!"
@@ -245,10 +271,16 @@ def handle_settings_menu(editor: Editor) -> str | None:
             f"Change Game Path/URI (Current: {config.game_path})",
             f"Toggle Update Checker (Enabled: {config.check_updates})",
             "Reset Configuration Setup Wizard",
-            "Back"
+            "Back",
         ]
 
-        draw_menu("Settings & Tools Menu", options, selected_idx, message, breadcrumb="Main Menu > Settings & Tools")
+        draw_menu(
+            "Settings & Tools Menu",
+            options,
+            selected_idx,
+            message,
+            breadcrumb="Main Menu > Settings & Tools",
+        )
         message = ""
 
         key: str = get_key()
@@ -265,7 +297,11 @@ def handle_settings_menu(editor: Editor) -> str | None:
             message = launch_game()
         elif key == "ctrl+i":
             message = get_option_description(options[selected_idx])
-        elif key in ("enter", "space", "right") or key.isdigit() or (len(key) == 1 and key.isalpha()):
+        elif (
+            key in ("enter", "space", "right")
+            or key.isdigit()
+            or (len(key) == 1 and key.isalpha())
+        ):
             idx: int = selected_idx
             if key.isdigit():
                 digit_idx: int = int(key) - 1
@@ -286,7 +322,12 @@ def handle_settings_menu(editor: Editor) -> str | None:
                     profile_options: list[str] = loaded + ["Cancel"]
                     prof_idx: int = 0
                     while True:
-                        draw_menu("Select Active Profile", profile_options, prof_idx, breadcrumb="Main Menu > Settings > Profile Selection")
+                        draw_menu(
+                            "Select Active Profile",
+                            profile_options,
+                            prof_idx,
+                            breadcrumb="Main Menu > Settings > Profile Selection",
+                        )
                         pk: str = get_key()
                         if pk == "up":
                             prof_idx = (prof_idx - 1) % len(profile_options)
@@ -309,14 +350,22 @@ def handle_settings_menu(editor: Editor) -> str | None:
                     try:
                         synced_list: list[str] = editor.sync()
                         message = f"Synchronized active profiles: {synced_list}"
-                    except (SaveError, ProfileNotFoundError, OSError, KeyError, ValueError) as e:
+                    except (
+                        SaveError,
+                        ProfileNotFoundError,
+                        OSError,
+                        KeyError,
+                        ValueError,
+                    ) as e:
                         logger.error(f"Failed sync profiles: {e}")
                         message = f"Sync failed: {e}"
                 elif idx == 2:
                     try:
                         filepath: str = select_file_dialog()
                         if filepath:
-                            if prompt_confirm("Replace current save file? (This will auto-create a backup of the old one)"):
+                            if prompt_confirm(
+                                "Replace current save file? (This will auto-create a backup of the old one)"
+                            ):
                                 message = import_save_file(filepath, editor)
                                 editor.reload()
                                 editor.sync()
@@ -324,7 +373,13 @@ def handle_settings_menu(editor: Editor) -> str | None:
                                 message = "Import cancelled."
                         else:
                             message = "No file selected."
-                    except (SaveError, CryptError, OSError, ValueError, json.JSONDecodeError) as e:
+                    except (
+                        SaveError,
+                        CryptError,
+                        OSError,
+                        ValueError,
+                        json.JSONDecodeError,
+                    ) as e:
                         logger.error(f"Import process failed: {e}")
                         message = f"Import failed: {e}"
                 elif idx == 3:
@@ -336,16 +391,21 @@ def handle_settings_menu(editor: Editor) -> str | None:
                     setup_logger()
                     message = f"Logging set to {config.logs_enabled}."
                 elif idx == 6:
-                    new_path: str = prompt_str("Enter SAS:ZA4 executable path or steam URI")
+                    new_path: str = prompt_str(
+                        "Enter SAS:ZA4 executable path or steam URI"
+                    )
                     config.game_path = new_path
                     message = "Game path updated successfully."
                 elif idx == 7:
                     config.check_updates = not config.check_updates
                     message = f"Automatic update checker set to {config.check_updates}."
                 elif idx == 8:
-                    if prompt_confirm("Are you sure you want to reset the configuration and run setup again?"):
+                    if prompt_confirm(
+                        "Are you sure you want to reset the configuration and run setup again?"
+                    ):
                         config.setup_done = False
                         from lib.utils.setup import run_setup
+
                         run_setup()
                         editor.reload()
                         editor.sync()
@@ -354,4 +414,3 @@ def handle_settings_menu(editor: Editor) -> str | None:
                     return None
             except CancelError:
                 message = "Action cancelled."
-

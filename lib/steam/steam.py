@@ -52,6 +52,7 @@ def _query_registry_path(hkey: int, subkey: str, value_name: str) -> Path | None
         return None
 
     import winreg
+
     try:
         with winreg.OpenKey(hkey, subkey, 0, winreg.KEY_READ) as key:
             path_str, _ = winreg.QueryValueEx(key, value_name)
@@ -66,6 +67,7 @@ def _resolve_windows() -> Path | None:
         return None
 
     import winreg
+
     lookups: tuple[tuple[int, str, str], ...] = (
         (winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam", "SteamPath"),
         (winreg.HKEY_LOCAL_MACHINE, r"Software\Valve\Steam", "InstallPath"),
@@ -114,4 +116,3 @@ class Resolver:
 
 
 default_resolver: Final[Resolver] = Resolver()
-

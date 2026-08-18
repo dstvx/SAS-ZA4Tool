@@ -4,7 +4,10 @@ __pycache__/
 .env
 
 exports/
+reference/
 backups/
+.tools/
+tools/
 
 Profile.save
 sas_za4tool.log

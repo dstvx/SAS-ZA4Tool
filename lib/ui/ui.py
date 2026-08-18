@@ -49,7 +49,7 @@ DESCRIPTIONS: Final[dict[str, str]] = {
     "Create Backup & Decrypted Export": "Save a backup copy and export decrypted data as Profile.json.",
     "Toggle Logging": "Enable or disable logging application logs to sas_za4tool.log.",
     "Change Game Path/URI": "Configure the Steam executable path or launch URI.",
-    "Reset Configuration Setup Wizard": "Reset all configuration settings and run the initial setup wizard again."
+    "Reset Configuration Setup Wizard": "Reset all configuration settings and run the initial setup wizard again.",
 }
 
 
@@ -77,7 +77,9 @@ def get_option_description(text: str) -> str:
     cleaned = cleaned.strip()
 
     for key, desc in DESCRIPTIONS.items():
-        if cleaned.lower().startswith(key.lower()) or key.lower().startswith(cleaned.lower()):
+        if cleaned.lower().startswith(key.lower()) or key.lower().startswith(
+            cleaned.lower()
+        ):
             return desc
     return "No description available for this option."
 
@@ -85,13 +87,15 @@ def get_option_description(text: str) -> str:
 def print_header() -> None:
     """Prints the application ASCII art title banner and selected profile name."""
     from lib.utils.updates import VERSION
+
     profile: str = config.current_profile or "None"
     header: str = (
         r"[red]        _______   _____ ____  ___  __________          __" + "\n"
         r"       / __/ _ | / __(_)_  / / _ |/ / /_  __/__  ___  / /" + "\n"
         r"      _\ \/ __ |_\ \_   / /_/ __ /_  _// / / _ \/ _ \/ / " + "\n"
         r"     /___/_/ |_/___(_) /___/_/ |_|/_/ /_/  \___/\___/_/  [/]" + "\n"
-        r"                    [cyan]by[/][white]:[/] [green]dstvx[/][cyan] ver[/][white]:[/] [green]{}[/]" + "\n"
+        r"                    [cyan]by[/][white]:[/] [green]dstvx[/][cyan] ver[/][white]:[/] [green]{}[/]"
+        + "\n"
         r"                 [cyan]Selected Profile: [/][green]{}[/]"
     ).format(VERSION, profile)
     console.print(header)
@@ -135,7 +139,7 @@ def resize_console(width: int, height: int) -> None:
                 ("Left", ctypes.c_short),
                 ("Top", ctypes.c_short),
                 ("Right", ctypes.c_short),
-                ("Bottom", ctypes.c_short)
+                ("Bottom", ctypes.c_short),
             ]
 
         class CONSOLE_SCREEN_BUFFER_INFO(ctypes.Structure):
@@ -144,12 +148,19 @@ def resize_console(width: int, height: int) -> None:
                 ("dwCursorPosition", COORD),
                 ("wAttributes", ctypes.c_ushort),
                 ("srWindow", SMALL_RECT),
-                ("dwMaximumWindowSize", COORD)
+                ("dwMaximumWindowSize", COORD),
             ]
 
-        kernel32.GetConsoleScreenBufferInfo.argtypes = [wintypes.HANDLE, ctypes.c_void_p]
+        kernel32.GetConsoleScreenBufferInfo.argtypes = [
+            wintypes.HANDLE,
+            ctypes.c_void_p,
+        ]
         kernel32.GetConsoleScreenBufferInfo.restype = wintypes.BOOL
-        kernel32.SetConsoleWindowInfo.argtypes = [wintypes.HANDLE, wintypes.BOOL, ctypes.c_void_p]
+        kernel32.SetConsoleWindowInfo.argtypes = [
+            wintypes.HANDLE,
+            wintypes.BOOL,
+            ctypes.c_void_p,
+        ]
         kernel32.SetConsoleWindowInfo.restype = wintypes.BOOL
         kernel32.SetConsoleScreenBufferSize.argtypes = [wintypes.HANDLE, COORD]
         kernel32.SetConsoleScreenBufferSize.restype = wintypes.BOOL
@@ -178,6 +189,7 @@ def update_console_title(breadcrumb: str) -> None:
     if sys.platform == "win32":
         try:
             import ctypes
+
             ctypes.windll.kernel32.SetConsoleTitleW(title)
         except (ImportError, OSError, AttributeError):
             pass
@@ -186,7 +198,13 @@ def update_console_title(breadcrumb: str) -> None:
         sys.stdout.flush()
 
 
-def draw_menu(title: str, options: list[str], selected_idx: int, message: str = "", breadcrumb: str = "Main Menu") -> None:
+def draw_menu(
+    title: str,
+    options: list[str],
+    selected_idx: int,
+    message: str = "",
+    breadcrumb: str = "Main Menu",
+) -> None:
     """Renders the menu options list with titles and navigation help tips.
 
     Args:
@@ -221,8 +239,12 @@ def draw_menu(title: str, options: list[str], selected_idx: int, message: str = 
     else:
         console.print("\n")
 
-    console.print("\n[dim]Use Up/Down Arrow to navigate, Space/Enter/Right to select, Backspace/Esc/Left to go back[/]")
-    console.print("[dim]Press 1-9 or A-Z to select instantly, Ctrl+X to launch game, Ctrl+C to exit, Tab / Ctrl+I for description[/]")
+    console.print(
+        "\n[dim]Use Up/Down Arrow to navigate, Space/Enter/Right to select, Backspace/Esc/Left to go back[/]"
+    )
+    console.print(
+        "[dim]Press 1-9 or A-Z to select instantly, Ctrl+X to launch game, Ctrl+C to exit, Tab / Ctrl+I for description[/]"
+    )
 
 
 def _parse_posix_key_seq(seq: bytes) -> str:
@@ -300,6 +322,7 @@ def _get_key_windows() -> str:
         return ""
 
     import msvcrt
+
     getch_fn = getattr(msvcrt, "getch", None)
     if getch_fn is None:
         return ""
@@ -406,6 +429,7 @@ def prompt_input(prompt_text: str, clear_screen_first: bool = True) -> str:
         str: User input value string.
     """
     from lib.exceptions import CancelError
+
     if clear_screen_first:
         clear_screen()
         print_header()
@@ -434,7 +458,12 @@ def prompt_input(prompt_text: str, clear_screen_first: bool = True) -> str:
         raise CancelError() from e
 
 
-def prompt_int(prompt_text: str, min_val: int | None = None, max_val: int | None = None, clear_screen: bool = True) -> int:
+def prompt_int(
+    prompt_text: str,
+    min_val: int | None = None,
+    max_val: int | None = None,
+    clear_screen: bool = True,
+) -> int:
     """Prompts the user for an integer, validating it stays within boundaries.
 
     Args:
@@ -486,7 +515,11 @@ def prompt_confirm(prompt_text: str, clear_screen: bool = True) -> bool:
         bool: True for yes, False for no.
     """
     while True:
-        val: str = prompt_input(f"{prompt_text} (Y/n)", clear_screen_first=clear_screen).strip().lower()
+        val: str = (
+            prompt_input(f"{prompt_text} (Y/n)", clear_screen_first=clear_screen)
+            .strip()
+            .lower()
+        )
         if val in ("", "y", "yes"):
             return True
         if val in ("n", "no"):
@@ -499,7 +532,9 @@ def launch_game() -> str:
     Returns:
         str: Result feedback notice string.
     """
-    game_path: str = getattr(config, "game_path", "steam://run/678800") or "steam://run/678800"
+    game_path: str = (
+        getattr(config, "game_path", "steam://run/678800") or "steam://run/678800"
+    )
     logger.info(f"Launching game from path/URI: {game_path}")
     try:
         if sys.platform == "win32":
@@ -517,7 +552,9 @@ def launch_game() -> str:
             ]
             for cmd in launchers:
                 try:
-                    subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    subprocess.Popen(
+                        cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                    )
                     logger.info(f"Launched game via {cmd[0]}")
                     return "Game launched successfully!"
                 except (OSError, FileNotFoundError):
@@ -525,11 +562,12 @@ def launch_game() -> str:
             return "Failed to launch Steam (no compatible launcher found)."
 
         if os.path.exists(game_path):
-            subprocess.Popen([game_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.Popen(
+                [game_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
             return "Game launched successfully!"
 
         return f"Game path '{game_path}' not found."
     except OSError as e:
         logger.error(f"Failed to launch game: {e}")
         return f"Failed to launch game: {e}"
-

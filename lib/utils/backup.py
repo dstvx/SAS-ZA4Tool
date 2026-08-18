@@ -17,12 +17,13 @@ def select_file_dialog() -> str:
     """
     try:
         from tkinter import TclError, Tk, filedialog
+
         root: Tk = Tk()
         root.withdraw()
         root.attributes("-topmost", True)
         filepath: str = filedialog.askopenfilename(
             title="Select SAS:ZA4 Save or JSON File",
-            filetypes=[("Save / JSON Files", "*.save;*.json"), ("All Files", "*.*")]
+            filetypes=[("Save / JSON Files", "*.save;*.json"), ("All Files", "*.*")],
         )
         root.destroy()
         if filepath:
@@ -32,8 +33,11 @@ def select_file_dialog() -> str:
 
     from lib.exceptions import CancelError
     from lib.ui.ui import prompt_str
+
     try:
-        return prompt_str("Enter path to SAS:ZA4 .save or .json file", clear_screen=False)
+        return prompt_str(
+            "Enter path to SAS:ZA4 .save or .json file", clear_screen=False
+        )
     except CancelError:
         return ""
 
@@ -54,12 +58,16 @@ def create_backup(editor: Any = None) -> str:
 
         timestamp: str = datetime.now().astimezone().strftime("%Y%m%d_%H%M%S")
 
-        backup_dir: Path = Path(__file__).resolve().parent.parent.parent / "backups" / timestamp
+        backup_dir: Path = (
+            Path(__file__).resolve().parent.parent.parent / "backups" / timestamp
+        )
         backup_dir.mkdir(parents=True, exist_ok=True)
         backup_path: Path = backup_dir / "Profile.save"
         shutil.copy2(save_path, backup_path)
 
-        export_dir: Path = Path(__file__).resolve().parent.parent.parent / "exports" / timestamp
+        export_dir: Path = (
+            Path(__file__).resolve().parent.parent.parent / "exports" / timestamp
+        )
         export_dir.mkdir(parents=True, exist_ok=True)
         export_path: Path = export_dir / "Profile.json"
 
@@ -126,4 +134,3 @@ def import_save_file(filepath: str, editor: Any = None) -> str:
     except OSError as e:
         logger.error(f"Import failed: {e}")
         return f"Import failed: {e}"
-

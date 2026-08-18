@@ -9,16 +9,106 @@ from lib.exceptions import CryptError, ProfileNotFoundError, SaveError
 from lib.utils.logger import logger
 
 XP_THRESHOLDS = [
-    0, 1071, 1288, 1655, 2176, 2855, 3696, 4704, 5883, 7237,
-    8770, 10486, 12390, 14486, 16778, 19270, 21966, 24871, 27989, 31324,
-    34880, 38661, 42672, 46917, 51400, 56125, 91145, 98978, 107193, 115797,
-    124795, 134195, 144002, 154222, 164863, 175930, 187430, 199368, 211752, 224587,
-    237880, 251637, 265865, 280569, 295756, 311433, 327605, 344279, 361461, 379158,
-    397375, 416120, 435398, 455215, 475579, 496495, 517970, 540009, 562620, 585808,
-    609580, 844923, 878201, 912282, 947176, 982890, 1019433, 1056813, 1095038, 1134118,
-    1174060, 1214873, 1256565, 1299144, 1342620, 1387000, 1432293, 1478507, 1525650, 1573732,
-    1622760, 1672743, 1723689, 1775606, 1828504, 1882390, 1937273, 1993161, 2050062, 2107986,
-    2166940, 3339899, 3431459, 3524603, 3619342, 3715690, 3813659, 3913262, 4014512, 4117420
+    0,
+    1071,
+    1288,
+    1655,
+    2176,
+    2855,
+    3696,
+    4704,
+    5883,
+    7237,
+    8770,
+    10486,
+    12390,
+    14486,
+    16778,
+    19270,
+    21966,
+    24871,
+    27989,
+    31324,
+    34880,
+    38661,
+    42672,
+    46917,
+    51400,
+    56125,
+    91145,
+    98978,
+    107193,
+    115797,
+    124795,
+    134195,
+    144002,
+    154222,
+    164863,
+    175930,
+    187430,
+    199368,
+    211752,
+    224587,
+    237880,
+    251637,
+    265865,
+    280569,
+    295756,
+    311433,
+    327605,
+    344279,
+    361461,
+    379158,
+    397375,
+    416120,
+    435398,
+    455215,
+    475579,
+    496495,
+    517970,
+    540009,
+    562620,
+    585808,
+    609580,
+    844923,
+    878201,
+    912282,
+    947176,
+    982890,
+    1019433,
+    1056813,
+    1095038,
+    1134118,
+    1174060,
+    1214873,
+    1256565,
+    1299144,
+    1342620,
+    1387000,
+    1432293,
+    1478507,
+    1525650,
+    1573732,
+    1622760,
+    1672743,
+    1723689,
+    1775606,
+    1828504,
+    1882390,
+    1937273,
+    1993161,
+    2050062,
+    2107986,
+    2166940,
+    3339899,
+    3431459,
+    3524603,
+    3619342,
+    3715690,
+    3813659,
+    3913262,
+    4014512,
+    4117420,
 ]
 
 
@@ -37,7 +127,6 @@ class ProfileProxy:
         """Gets a value from this profile."""
         return self._editor.get_profile_value(self._profile_key, key_path, default)
 
-                                                                  
     @property
     def name(self) -> str:
         """Gets the profile name."""
@@ -118,7 +207,6 @@ class ProfileProxy:
             raise ValueError("Grenade count must be a non-negative integer.")
         self.set(["Ammo", "grenades_cryo"], value)
 
-                                      
     def get_available_turrets(self) -> list[dict[str, Any]]:
         """Returns the list of available turrets based on player level tier."""
         level = self.level
@@ -137,10 +225,15 @@ class ProfileProxy:
             raise ValueError("Turret count must be a non-negative integer.")
 
         data = self._editor._load()
-        turrets = data.setdefault("Inventory", {}).setdefault(self._profile_key, {}).setdefault("Turrets", [])
+        turrets = (
+            data.setdefault("Inventory", {})
+            .setdefault(self._profile_key, {})
+            .setdefault("Turrets", [])
+        )
 
-                                                     
-        match = next((item for item in turrets if item.get("TurretId") == turret_id), None)
+        match = next(
+            (item for item in turrets if item.get("TurretId") == turret_id), None
+        )
         if match is not None:
             match["TurretCount"] = count
         else:
@@ -148,7 +241,6 @@ class ProfileProxy:
 
         self._editor._save(data)
 
-                                    
     @property
     def level(self) -> int:
         """Gets the profile player level."""
@@ -160,7 +252,6 @@ class ProfileProxy:
         if not (1 <= val <= 100):
             raise ValueError("Player level must be between 1 and 100.")
 
-                                                         
         total_xp = sum(XP_THRESHOLDS[:val])
         self.set(["Skills", "PlayerLevel"], val)
         self.set(["Skills", "PlayerTotalXp"], total_xp)
@@ -177,7 +268,6 @@ class ProfileProxy:
             raise ValueError("XP must be a non-negative integer.")
         self.set(["Skills", "PlayerTotalXp"], val)
 
-                                                     
     def remove_item(self, category: str, list_index: int) -> None:
         """Pops an item from the category list and re-assigns InventoryIndex sequentially."""
         if category not in ("Weapons", "Equipment"):
@@ -192,11 +282,9 @@ class ProfileProxy:
 
         removed_item = item_list.pop(list_index)
 
-                                                       
         for idx, item in enumerate(item_list):
             item["InventoryIndex"] = idx
 
-                                  
         if category == "Weapons":
             removed_id = removed_item.get("ID")
             premium_map = self._editor._get_premium_weapons()
@@ -204,19 +292,29 @@ class ProfileProxy:
                 still_exists = any(item.get("ID") == removed_id for item in item_list)
                 if not still_exists:
                     iap_id = premium_map[removed_id]
-                    iap_array = data.setdefault("PurchasedIAP", {}).setdefault("PurchasedIAPArray", [])
-                    match = next((item for item in iap_array if item.get("Identifier") == iap_id), None)
+                    iap_array = data.setdefault("PurchasedIAP", {}).setdefault(
+                        "PurchasedIAPArray", []
+                    )
+                    match = next(
+                        (
+                            item
+                            for item in iap_array
+                            if item.get("Identifier") == iap_id
+                        ),
+                        None,
+                    )
                     if match is not None:
                         match["Value"] = False
 
         self._editor._save(data)
 
-                                    
     def set_masteries(self, level: int, xp: int) -> None:
         """Sets the Mastery level and XP for all weapon/armour masteries."""
         data = self._editor._load()
         mastery_key = f"Mastery{self._profile_key}"
-        mastery_list = data.setdefault("MasteryProgress", {}).setdefault(mastery_key, [])
+        mastery_list = data.setdefault("MasteryProgress", {}).setdefault(
+            mastery_key, []
+        )
         for item in mastery_list:
             item["MasteryLvl"] = level
             item["MasteryXp"] = xp
@@ -230,7 +328,6 @@ class ProfileProxy:
         """Resets mastery level and mastery XP to 0 for all items."""
         self.set_masteries(0, 0)
 
-                                     
     def inject_item(
         self,
         is_weapon: bool,
@@ -302,8 +399,13 @@ class ProfileProxy:
             premium_map = self._editor._get_premium_weapons()
             if item_id in premium_map:
                 iap_id = premium_map[item_id]
-                iap_array = data.setdefault("PurchasedIAP", {}).setdefault("PurchasedIAPArray", [])
-                match = next((item for item in iap_array if item.get("Identifier") == iap_id), None)
+                iap_array = data.setdefault("PurchasedIAP", {}).setdefault(
+                    "PurchasedIAPArray", []
+                )
+                match = next(
+                    (item for item in iap_array if item.get("Identifier") == iap_id),
+                    None,
+                )
                 if match is not None:
                     match["Value"] = True
                 else:
@@ -368,8 +470,13 @@ class ProfileProxy:
             premium_map = self._editor._get_premium_weapons()
             if item_id in premium_map:
                 iap_id = premium_map[item_id]
-                iap_array = data.setdefault("PurchasedIAP", {}).setdefault("PurchasedIAPArray", [])
-                match = next((item for item in iap_array if item.get("Identifier") == iap_id), None)
+                iap_array = data.setdefault("PurchasedIAP", {}).setdefault(
+                    "PurchasedIAPArray", []
+                )
+                match = next(
+                    (item for item in iap_array if item.get("Identifier") == iap_id),
+                    None,
+                )
                 if match is not None:
                     match["Value"] = True
                 else:
@@ -377,8 +484,6 @@ class ProfileProxy:
 
         self._editor._save(data)
 
-
-                                       
     def get_mp_stat(self, stat_key: str, default: int = 0) -> int:
         """Gets a multiplayer stat value by key (e.g. games_lost)."""
         stats = self.get("StatsData", [])
@@ -388,9 +493,12 @@ class ProfileProxy:
     def set_mp_stat(self, stat_key: str, value: int) -> None:
         """Sets a multiplayer stat value by key (e.g. games_lost)."""
         data = self._editor._load()
-        stats = data.setdefault("Inventory", {}).setdefault(self._profile_key, {}).setdefault("StatsData", [])
+        stats = (
+            data.setdefault("Inventory", {})
+            .setdefault(self._profile_key, {})
+            .setdefault("StatsData", [])
+        )
 
-                                               
         match = next((item for item in stats if item.get("key") == stat_key), None)
         if match is not None:
             match["val"] = value
@@ -399,7 +507,6 @@ class ProfileProxy:
 
         self._editor._save(data)
 
-                                                      
     def clear_strongbox_queues(self) -> None:
         """Resets both the normal strongbox claim queue and available black boxes list."""
         self.set(["Strongboxes", "Claimed"], [])
@@ -410,7 +517,9 @@ class ProfileProxy:
         if isinstance(count_or_seeds, int):
             if count_or_seeds < 0:
                 raise ValueError("Count must be a non-negative integer.")
-            new_seeds = [random.randint(100000, 9999999999) for _ in range(count_or_seeds)]
+            new_seeds = [
+                random.randint(100000, 9999999999) for _ in range(count_or_seeds)
+            ]
         elif isinstance(count_or_seeds, list):
             new_seeds = count_or_seeds
         else:
@@ -423,7 +532,9 @@ class ProfileProxy:
         if isinstance(count_or_seeds, int):
             if count_or_seeds < 0:
                 raise ValueError("Count must be a non-negative integer.")
-            new_seeds = [random.randint(100000, 9999999999) for _ in range(count_or_seeds)]
+            new_seeds = [
+                random.randint(100000, 9999999999) for _ in range(count_or_seeds)
+            ]
         elif isinstance(count_or_seeds, list):
             new_seeds = count_or_seeds
         else:
@@ -448,11 +559,8 @@ class ProfileProxy:
         for i in range(0, len(claimed), 4):
             if i + 1 < len(claimed):
                 item_data = claimed[i + 1]
-                is_weapon = (claimed[i] == 0)
-                items.append({
-                    "is_weapon": is_weapon,
-                    "data": item_data
-                })
+                is_weapon = claimed[i] == 0
+                items.append({"is_weapon": is_weapon, "data": item_data})
         return items
 
     def remove_claimed_strongbox(self, index: int) -> None:
@@ -469,7 +577,9 @@ class ProfileProxy:
             del claimed[start_idx : start_idx + 4]
         self._editor._save(data)
 
-    def transport_item(self, category: str, list_index: int, dest_profile_key: str) -> None:
+    def transport_item(
+        self, category: str, list_index: int, dest_profile_key: str
+    ) -> None:
         """Pops an item from the category list and appends it to the destination profile's category list."""
         if category not in ("Weapons", "Equipment"):
             raise ValueError("Category must be 'Weapons' or 'Equipment'.")
@@ -478,7 +588,9 @@ class ProfileProxy:
         if dest_profile_key not in data.get("Inventory", {}):
             raise ValueError(f"Destination profile {dest_profile_key} not found.")
 
-        src_inventory = data.setdefault("Inventory", {}).setdefault(self._profile_key, {})
+        src_inventory = data.setdefault("Inventory", {}).setdefault(
+            self._profile_key, {}
+        )
         src_list = src_inventory.setdefault(category, [])
 
         if not (0 <= list_index < len(src_list)):
@@ -499,7 +611,9 @@ class ProfileProxy:
 
         self._editor._save(data)
 
-    def update_item_stats(self, category: str, list_index: int, grade: int, augs: int, bonus: int) -> None:
+    def update_item_stats(
+        self, category: str, list_index: int, grade: int, augs: int, bonus: int
+    ) -> None:
         """Updates the grade, augment slots, and bonus stats level of an item in inventory."""
         if category not in ("Weapons", "Equipment"):
             raise ValueError("Category must be 'Weapons' or 'Equipment'.")
@@ -526,7 +640,9 @@ class ProfileProxy:
 
         self._editor._save(data)
 
-    def update_claimed_strongbox_stats(self, index: int, grade: int, augs: int, bonus: int) -> None:
+    def update_claimed_strongbox_stats(
+        self, index: int, grade: int, augs: int, bonus: int
+    ) -> None:
         """Updates the grade, augment slots, and bonus stats level of an item in the claim queue."""
         if not (0 <= grade <= 12):
             raise ValueError("Grade must be in [0, 12].")
@@ -547,7 +663,7 @@ class ProfileProxy:
             item["AugmentSlots"] = augs
             item["BonusStatsLevel"] = bonus
 
-            is_weapon = (claimed[start_idx] == 0)
+            is_weapon = claimed[start_idx] == 0
             max_augs = 4 if is_weapon else 3
             if not (0 <= augs <= max_augs):
                 raise ValueError(f"Augment slots must be in [0, {max_augs}].")
@@ -560,8 +676,12 @@ class ProfileProxy:
         if dest_profile_key not in data.get("Inventory", {}):
             raise ValueError(f"Destination profile {dest_profile_key} not found.")
 
-        src_inventory = data.setdefault("Inventory", {}).setdefault(self._profile_key, {})
-        src_claimed = src_inventory.setdefault("Strongboxes", {}).setdefault("Claimed", [])
+        src_inventory = data.setdefault("Inventory", {}).setdefault(
+            self._profile_key, {}
+        )
+        src_claimed = src_inventory.setdefault("Strongboxes", {}).setdefault(
+            "Claimed", []
+        )
 
         start_idx = index * 4
         if not (0 <= start_idx < len(src_claimed)):
@@ -573,7 +693,9 @@ class ProfileProxy:
         val_2 = src_claimed.pop(start_idx)
 
         dest_inventory = data["Inventory"][dest_profile_key]
-        dest_claimed = dest_inventory.setdefault("Strongboxes", {}).setdefault("Claimed", [])
+        dest_claimed = dest_inventory.setdefault("Strongboxes", {}).setdefault(
+            "Claimed", []
+        )
 
         dest_claimed.append(item_type)
         dest_claimed.append(item_dict)
@@ -589,7 +711,6 @@ class GlobalProxy:
     def __init__(self, editor: "Editor") -> None:
         self._editor = editor
 
-                                                                       
     @property
     def revive_tokens(self) -> int:
         """Gets the global revive tokens count."""
@@ -620,7 +741,6 @@ class GlobalProxy:
         """Sets whether ads are globally removed."""
         self._editor.set_global_property("ForceRemoveAds", value)
 
-                                            
     def set_collection_state(self, unlocked: bool) -> None:
         """Sets the unlocked state for all weapons, armours, and rewards collections."""
         data = self._editor._load()
@@ -672,7 +792,6 @@ class GlobalProxy:
             "CollectionTimesUsed",
         }
 
-                                                        
         for category in ("CollectionArrayWeapon", "CollectionArrayArmour"):
             for item in data.setdefault(category, []):
                 for key in target_keys:
@@ -681,20 +800,27 @@ class GlobalProxy:
 
         self._editor._save(data)
 
-                                           
     def get_iap_status(self, identifier: str) -> bool:
         """Returns True if the specified IAP is purchased/unlocked."""
         data = self._editor._load()
-        iap_array = data.setdefault("PurchasedIAP", {}).setdefault("PurchasedIAPArray", [])
-        return any(item.get("Identifier") == identifier and item.get("Value") is True for item in iap_array)
+        iap_array = data.setdefault("PurchasedIAP", {}).setdefault(
+            "PurchasedIAPArray", []
+        )
+        return any(
+            item.get("Identifier") == identifier and item.get("Value") is True
+            for item in iap_array
+        )
 
     def toggle_iap(self, identifier: str) -> None:
         """Toggles the state of a specific In-App Purchase/DLC."""
         data = self._editor._load()
-        iap_array = data.setdefault("PurchasedIAP", {}).setdefault("PurchasedIAPArray", [])
+        iap_array = data.setdefault("PurchasedIAP", {}).setdefault(
+            "PurchasedIAPArray", []
+        )
 
-                                               
-        match = next((item for item in iap_array if item.get("Identifier") == identifier), None)
+        match = next(
+            (item for item in iap_array if item.get("Identifier") == identifier), None
+        )
         if match is not None:
             match["Value"] = not match.get("Value", False)
         else:
@@ -713,9 +839,10 @@ class GlobalProxy:
     def unlock_fairground_pack(self) -> None:
         """Unlocks the Fairground premium map pack DLC."""
         data = self._editor._load()
-        iap_array = data.setdefault("PurchasedIAP", {}).setdefault("PurchasedIAPArray", [])
+        iap_array = data.setdefault("PurchasedIAP", {}).setdefault(
+            "PurchasedIAPArray", []
+        )
 
-                                    
         while len(iap_array) < 17:
             iap_array.append({"Identifier": "unknown", "Value": False})
 
@@ -724,14 +851,14 @@ class GlobalProxy:
 
         self._editor._save(data)
 
-                         
     def set_faction(self, faction_name: str) -> None:
         """Joins the specified faction, or leaves if already in it."""
         data = self._editor._load()
         current = data.get("CurrentFactionWarFaction", "")
 
-                                       
-        data["CurrentFactionWarFaction"] = "" if current == faction_name else faction_name
+        data["CurrentFactionWarFaction"] = (
+            "" if current == faction_name else faction_name
+        )
         self._editor._save(data)
 
     def set_faction_war_credits(self, pid: str, amt: int) -> None:
@@ -765,7 +892,14 @@ class Editor:
         try:
             if self._has_valid_filepath():
                 self._data = self._load()
-        except (SaveError, CryptError, OSError, json.JSONDecodeError, KeyError, ValueError):
+        except (
+            SaveError,
+            CryptError,
+            OSError,
+            json.JSONDecodeError,
+            KeyError,
+            ValueError,
+        ):
             self._data = None
 
     def _has_valid_filepath(self) -> bool:
@@ -875,9 +1009,6 @@ class Editor:
         config.active_profiles = loaded
         return loaded
 
-
-                                                              
-
     def get_global_property(self, key: str, default: Any = None) -> Any:
         """Gets a property value from the nested 'Global' dictionary."""
         try:
@@ -905,7 +1036,9 @@ class Editor:
     def unlock_profiles(self) -> None:
         """Unlocks paywalled character slots (Profile4 and Profile5)."""
         data = self._load()
-        iap_array = data.setdefault("PurchasedIAP", {}).setdefault("PurchasedIAPArray", [])
+        iap_array = data.setdefault("PurchasedIAP", {}).setdefault(
+            "PurchasedIAPArray", []
+        )
         target_ids = {"SAS4_CharacterSlot1", "SAS4_CharacterSlot2"}
         for item in iap_array:
             if item.get("Identifier") in target_ids:
@@ -915,20 +1048,41 @@ class Editor:
     def unlock_all_premium_guns(self) -> None:
         """Globally unlocks/purchases all premium DLC weapons in the PurchasedIAP list."""
         premium_guns = [
-            "sas4_ahab", "sas4_banshee", "sas4_bayonet", "sas4_calamity",
-            "sas4_cm000kelvin", "sas4_cm352quasar", "sas4_cm369starfury",
-            "sas4_cm467", "sas4_cm505alphaltdedition", "sas4_cmlaserdrill",
-            "sas4_cmprotonarc", "sas4_contagion", "sas4_donderbus",
-            "sas4_handkanone", "sas4_hiks888caw", "sas4_hiksa10",
-            "sas4_hikss4000", "sas4_planetstormerltdedition", "sas4_ria15se",
-            "sas4_ria75", "sas4_ria8a", "sas4_ricochet", "sas4_ronson5x5",
-            "sas4_ronsonwpxincinerator"
+            "sas4_ahab",
+            "sas4_banshee",
+            "sas4_bayonet",
+            "sas4_calamity",
+            "sas4_cm000kelvin",
+            "sas4_cm352quasar",
+            "sas4_cm369starfury",
+            "sas4_cm467",
+            "sas4_cm505alphaltdedition",
+            "sas4_cmlaserdrill",
+            "sas4_cmprotonarc",
+            "sas4_contagion",
+            "sas4_donderbus",
+            "sas4_handkanone",
+            "sas4_hiks888caw",
+            "sas4_hiksa10",
+            "sas4_hikss4000",
+            "sas4_planetstormerltdedition",
+            "sas4_ria15se",
+            "sas4_ria75",
+            "sas4_ria8a",
+            "sas4_ricochet",
+            "sas4_ronson5x5",
+            "sas4_ronsonwpxincinerator",
         ]
         data = self._load()
-        iap_array = data.setdefault("PurchasedIAP", {}).setdefault("PurchasedIAPArray", [])
+        iap_array = data.setdefault("PurchasedIAP", {}).setdefault(
+            "PurchasedIAPArray", []
+        )
 
         for identifier in premium_guns:
-            match = next((item for item in iap_array if item.get("Identifier") == identifier), None)
+            match = next(
+                (item for item in iap_array if item.get("Identifier") == identifier),
+                None,
+            )
             if match is not None:
                 match["Value"] = True
             else:
@@ -978,21 +1132,21 @@ class Editor:
             pass
         return 1
 
-                                        
-
-    def set_profile_value(self, profile_key: str, key_path: str | list[str], value: Any) -> None:
+    def set_profile_value(
+        self, profile_key: str, key_path: str | list[str], value: Any
+    ) -> None:
         """Sets a value inside a specific loaded profile, supporting nested key paths."""
         data = self._load()
         profile = data.get("Inventory", {}).get(profile_key)
 
         if not profile or not profile.get("Loaded"):
-            raise ProfileNotFoundError(f"Profile '{profile_key}' is not active or loaded.")
+            raise ProfileNotFoundError(
+                f"Profile '{profile_key}' is not active or loaded."
+            )
 
         if isinstance(key_path, str):
             profile[key_path] = value
         else:
-                                  
-                                           
             current = profile
             for step in key_path[:-1]:
                 current = current.setdefault(step, {})
@@ -1000,19 +1154,21 @@ class Editor:
 
         self._save(data)
 
-    def get_profile_value(self, profile_key: str, key_path: str | list[str], default: Any = None) -> Any:
+    def get_profile_value(
+        self, profile_key: str, key_path: str | list[str], default: Any = None
+    ) -> Any:
         """Gets a value from a specific loaded profile, supporting nested key paths."""
         data = self._load()
         profile = data.get("Inventory", {}).get(profile_key)
 
         if not profile or not profile.get("Loaded"):
-            raise ProfileNotFoundError(f"Profile '{profile_key}' is not active or loaded.")
+            raise ProfileNotFoundError(
+                f"Profile '{profile_key}' is not active or loaded."
+            )
 
         if isinstance(key_path, str):
             return profile.get(key_path, default)
 
-                              
-                                       
         current = profile
         for step in key_path[:-1]:
             current = current.setdefault(step, {})

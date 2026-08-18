@@ -49,7 +49,9 @@ class SaveResolver:
             raise GameNotFoundError("Steam installation path could not be resolved.")
 
         account_id: int = to_account_id(steam_id)
-        userdata_app_path: Path = steam_path / "userdata" / str(account_id) / str(SAS_ZA4_APP_ID)
+        userdata_app_path: Path = (
+            steam_path / "userdata" / str(account_id) / str(SAS_ZA4_APP_ID)
+        )
 
         if not userdata_app_path.exists():
             is_installed = self._check_game_installed(steam_path)
@@ -112,4 +114,3 @@ class SaveResolver:
 
 
 save_path: Final[SaveResolver] = SaveResolver()
-

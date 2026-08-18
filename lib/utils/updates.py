@@ -17,10 +17,7 @@ def check_for_updates() -> tuple[bool, str]:
     """
     url: str = "https://api.github.com/repos/dstvx/SAS-ZA4Tool/releases/latest"
     try:
-        req = urllib.request.Request(
-            url,
-            headers={"User-Agent": "Mozilla/5.0"}
-        )
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=3) as response:
             data = json.loads(response.read().decode("utf-8"))
             latest_version = data.get("tag_name", "").strip().lstrip("v")
@@ -29,7 +26,12 @@ def check_for_updates() -> tuple[bool, str]:
                 latest_parts = [int(x) for x in latest_version.split(".")]
                 if latest_parts > current_parts:
                     return True, latest_version
-    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError, ValueError) as e:
+    except (
+        urllib.error.URLError,
+        TimeoutError,
+        OSError,
+        json.JSONDecodeError,
+        ValueError,
+    ) as e:
         logger.debug(f"Update check skipped or failed: {e}")
     return False, VERSION
-

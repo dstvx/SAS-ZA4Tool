@@ -44,11 +44,13 @@ def parse_steam_users(steam_path: Path) -> list[dict[str, str]]:
             persona_match = re.search(r'"PersonaName"\s+"([^"]+)"', body)
             account_match = re.search(r'"AccountName"\s+"([^"]+)"', body)
 
-            users.append({
-                "steam_id": steam_id,
-                "persona": persona_match.group(1) if persona_match else "Unknown",
-                "account": account_match.group(1) if account_match else "Unknown"
-            })
+            users.append(
+                {
+                    "steam_id": steam_id,
+                    "persona": persona_match.group(1) if persona_match else "Unknown",
+                    "account": account_match.group(1) if account_match else "Unknown",
+                }
+            )
     except OSError as e:
         logger.error(f"Failed parsing VDF: {e}")
     return users
@@ -60,7 +62,9 @@ def run_setup() -> None:
     console.print("\n[bold yellow]>>> SAS:ZA4Tool Setup Wizard <<<[/]")
     console.print("Let's configure your Steam and SAS:ZA4 game save settings.\n")
 
-    use_steam: bool = prompt_confirm("Do you want to auto-detect Steam settings from this machine?")
+    use_steam: bool = prompt_confirm(
+        "Do you want to auto-detect Steam settings from this machine?"
+    )
     steam_id: str = ""
     save_path: str = ""
 
@@ -68,25 +72,45 @@ def run_setup() -> None:
         try:
             steam_path: Path | None = default_resolver.resolve()
             if not steam_path:
-                raise FileNotFoundError("Steam installation path could not be resolved automatically.")
+                raise FileNotFoundError(
+                    "Steam installation path could not be resolved automatically."
+                )
             console.print(f"Steam directory found: [green]{steam_path}[/]")
             users: list[dict[str, str]] = parse_steam_users(steam_path)
 
             if users:
                 console.print("\n[bold white]Available Steam Users on this PC:[/]")
                 for idx, user in enumerate(users):
-                    console.print(f"  [{idx + 1}] [cyan]{user['persona']} ({user['account']})[/] - ID: {user['steam_id']}")
+                    console.print(
+                        f"  [{idx + 1}] [cyan]{user['persona']} ({user['account']})[/] - ID: {user['steam_id']}"
+                    )
 
-                sel: int = prompt_int("Select user profile index", min_val=1, max_val=len(users), clear_screen=False)
+                sel: int = prompt_int(
+                    "Select user profile index",
+                    min_val=1,
+                    max_val=len(users),
+                    clear_screen=False,
+                )
                 selected_user: dict[str, str] = users[sel - 1]
                 steam_id = selected_user["steam_id"]
                 console.print(f"Selected: [green]{selected_user['persona']}[/]")
             else:
                 console.print("[yellow]No Steam users detected in loginusers.vdf.[/]")
-                steam_id = prompt_str("Please enter your 17-digit Steam ID manually", clear_screen=False)
-        except (ResolveError, GameNotFoundError, SaveNotFoundError, OSError, ValueError, KeyError) as e:
+                steam_id = prompt_str(
+                    "Please enter your 17-digit Steam ID manually", clear_screen=False
+                )
+        except (
+            ResolveError,
+            GameNotFoundError,
+            SaveNotFoundError,
+            OSError,
+            ValueError,
+            KeyError,
+        ) as e:
             console.print(f"[bold red]Failed to resolve Steam path: {e}[/]")
-            steam_id = prompt_str("Please enter your 17-digit Steam ID manually", clear_screen=False)
+            steam_id = prompt_str(
+                "Please enter your 17-digit Steam ID manually", clear_screen=False
+            )
     else:
         while True:
             steam_id = prompt_str("Enter your 17-digit Steam ID", clear_screen=False)
@@ -101,15 +125,29 @@ def run_setup() -> None:
             if not Path(save_path).exists():
                 console.print("[yellow]Resolved save path does not exist on disk.[/]")
                 save_path = ""
-        except (ResolveError, GameNotFoundError, SaveNotFoundError, OSError, ValueError, KeyError) as e:
-            console.print(f"[yellow]Could not automatically resolve SAS:ZA4 save path: {e}[/]")
+        except (
+            ResolveError,
+            GameNotFoundError,
+            SaveNotFoundError,
+            OSError,
+            ValueError,
+            KeyError,
+        ) as e:
+            console.print(
+                f"[yellow]Could not automatically resolve SAS:ZA4 save path: {e}[/]"
+            )
             save_path = ""
 
     while not save_path or not Path(save_path).exists():
-        save_path = prompt_str("Please paste the absolute path to your Profile.save file", clear_screen=False)
+        save_path = prompt_str(
+            "Please paste the absolute path to your Profile.save file",
+            clear_screen=False,
+        )
         if Path(save_path).exists() and Path(save_path).name.lower() == "profile.save":
             break
-        console.print("[bold red]Invalid path or file name. Must exist and end in 'Profile.save'.[/]")
+        console.print(
+            "[bold red]Invalid path or file name. Must exist and end in 'Profile.save'.[/]"
+        )
 
     config.steam_id = steam_id
     config.save_path = save_path
@@ -121,24 +159,43 @@ def run_setup() -> None:
 
         if len(loaded_profiles) == 1:
             config.current_profile = loaded_profiles[0]
-            console.print(f"Only one active profile found. Current profile set to [green]{loaded_profiles[0]}[/].")
+            console.print(
+                f"Only one active profile found. Current profile set to [green]{loaded_profiles[0]}[/]."
+            )
         elif len(loaded_profiles) > 1:
             console.print("\n[bold white]Select Default Active Profile:[/]")
             for idx, prof in enumerate(loaded_profiles):
                 console.print(f"  [{idx + 1}] {prof}")
-            sel = prompt_int("Select profile index", min_val=1, max_val=len(loaded_profiles), clear_screen=False)
+            sel = prompt_int(
+                "Select profile index",
+                min_val=1,
+                max_val=len(loaded_profiles),
+                clear_screen=False,
+            )
             config.current_profile = loaded_profiles[sel - 1]
         else:
             config.current_profile = ""
             console.print("[yellow]No loaded character profiles found in save file.[/]")
-    except (SaveError, CryptError, ProfileNotFoundError, OSError, ValueError, KeyError, json.JSONDecodeError) as e:
+    except (
+        SaveError,
+        CryptError,
+        ProfileNotFoundError,
+        OSError,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+    ) as e:
         logger.error(f"Setup profile resolution failed: {e}")
-        console.print(f"[bold red]Failed to read character profiles from save file: {e}[/]")
+        console.print(
+            f"[bold red]Failed to read character profiles from save file: {e}[/]"
+        )
 
-    check_updates: bool = prompt_confirm("Do you want to enable automatic update checking on startup?", clear_screen=False)
+    check_updates: bool = prompt_confirm(
+        "Do you want to enable automatic update checking on startup?",
+        clear_screen=False,
+    )
     config.check_updates = check_updates
 
     config.setup_done = True
     console.print("\n[bold green]Configuration setup complete![/]")
     input("Press Enter to launch SAS:ZA4Tool...")
-

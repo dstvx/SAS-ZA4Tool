@@ -34,7 +34,7 @@ def run_app() -> None:
             f"Profile (Active Profile: {config.current_profile or 'None'})",
             "Global",
             "Settings",
-            "Exit"
+            "Exit",
         ]
 
         draw_menu("Main Menu", options, selected_idx, message, breadcrumb="Main Menu")
@@ -57,7 +57,11 @@ def run_app() -> None:
                 message = launch_game()
             elif key == "ctrl+i":
                 message = get_option_description(options[selected_idx])
-            elif key in ("enter", "space", "right") or key.isdigit() or (len(key) == 1 and key.isalpha()):
+            elif (
+                key in ("enter", "space", "right")
+                or key.isdigit()
+                or (len(key) == 1 and key.isalpha())
+            ):
                 idx: int = selected_idx
                 if key.isdigit():
                     digit_idx: int = int(key) - 1
@@ -79,9 +83,10 @@ def run_app() -> None:
                     handle_global_menu(editor)
                 elif idx == 2:
                     handle_settings_menu(editor)
-                elif idx == 3 and prompt_confirm("Are you sure you want to exit the application?"):
+                elif idx == 3 and prompt_confirm(
+                    "Are you sure you want to exit the application?"
+                ):
                     clear_screen()
                     sys.exit(0)
         except CancelError:
             message = "Action cancelled."
-
